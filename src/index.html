@@ -8,8 +8,10 @@
 <link rel="stylesheet" href="style.css">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a1a1a">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -22,6 +24,12 @@
   <div class="header-right">
     <span id="proximoJogo" style="display:none;align-items:center;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:700;cursor:default" title="Próximo jogo cadastrado"></span>
     <div class="gen-counter">Geração #<span id="genNum">0</span></div>
+    <div id="syncArea" style="display:none;align-items:center;gap:4px">
+      <span id="ultimoSync" style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap"></span>
+      <button class="dark-toggle" id="btnSyncUp" onclick="sbSyncUp()" title="Salvar tudo na nuvem" style="font-size:11px;padding:4px 8px">☁️ Sync ↑</button>
+      <button class="dark-toggle" onclick="sbSyncDown()" title="Restaurar da nuvem" style="font-size:11px;padding:4px 8px">⬇️</button>
+    </div>
+    <button class="dark-toggle" id="btnAuth" onclick="abrirModalAuth()" title="Fazer login" style="font-size:11px;padding:4px 8px;margin-right:-4px">🔑 Entrar</button>
     <button class="dark-toggle" id="dashboardBtn" onclick="abrirDashboard()" title="Ver estatísticas de uso" style="margin-right:-4px">📊</button>
     <button class="dark-toggle" id="langToggle" onclick="toggleIdioma()" title="Prompt em português — clique para inglês" style="margin-right:-4px">🇧🇷</button>
     <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Alternar dark mode">🌙</button>
@@ -43,18 +51,21 @@
         <img id="prev-atleta" style="display:none">
         <p id="txt-atleta">📸 Foto<br>Atleta</p>
         <input type="file" id="fotoAtleta" accept="image/*">
+        <button id="rm-fotoAtleta" class="img-remove-btn" style="display:none" onclick="event.stopPropagation();removerImagem('fotoAtleta')" title="Remover imagem">✕</button>
       </div>
       <div class="upload-box missing" id="box-logo1" onclick="document.getElementById('logo1').click()">
         <div class="upload-warn">!</div>
         <img id="prev-logo1" style="display:none">
         <p id="txt-logo1">🛡️ Escudo<br>do Clube</p>
         <input type="file" id="logo1" accept="image/*">
+        <button id="rm-logo1" class="img-remove-btn" style="display:none" onclick="event.stopPropagation();removerImagem('logo1')" title="Remover imagem">✕</button>
       </div>
       <div class="upload-box" id="box-logo2" onclick="document.getElementById('logo2').click()">
         <div class="upload-warn">!</div>
         <img id="prev-logo2" style="display:none">
         <p id="txt-logo2">🛡️ Escudo<br>Adversário</p>
         <input type="file" id="logo2" accept="image/*">
+        <button id="rm-logo2" class="img-remove-btn" style="display:none" onclick="event.stopPropagation();removerImagem('logo2')" title="Remover imagem">✕</button>
       </div>
     </div>
     <p style="font-size:10px;color:var(--muted);font-weight:600">⚠️ Itens com ! precisam de imagem</p>
@@ -361,6 +372,47 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- MODAL AUTH -->
+<div class="modal-overlay" id="modalAuth">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">☁️ Conta Prompt Master</span>
+      <button class="modal-close" onclick="fecharModalAuth()">✕</button>
+    </div>
+    <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <button id="authTabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Entrar</button>
+      <button id="authTabRegister" class="auth-tab" onclick="switchAuthTab('register')">Criar conta</button>
+    </div>
+
+    <!-- FORM LOGIN -->
+    <div id="authFormLogin" class="modal-body" style="display:block;padding:0 20px 4px">
+      <label>E-mail</label>
+      <input type="email" id="authEmail" placeholder="seu@email.com" autocomplete="email">
+      <label style="margin-top:10px">Senha</label>
+      <input type="password" id="authSenha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') handleLogin()">
+      <div style="text-align:right;margin-top:4px">
+        <button class="link-btn" onclick="handleResetSenha()">Esqueci minha senha</button>
+      </div>
+    </div>
+    <div class="modal-footer" id="authFormLoginFooter">
+      <button class="btn btn-primary" id="btnLogin" style="width:100%" onclick="handleLogin()">Entrar</button>
+    </div>
+
+    <!-- FORM REGISTER -->
+    <div id="authFormRegister" class="modal-body" style="display:none;padding:0 20px 4px">
+      <label>E-mail</label>
+      <input type="email" id="regEmail" placeholder="seu@email.com" autocomplete="email">
+      <label style="margin-top:10px">Senha</label>
+      <input type="password" id="regSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      <label style="margin-top:10px">Confirmar senha</label>
+      <input type="password" id="regConfirm" placeholder="Repita a senha" autocomplete="new-password" onkeydown="if(event.key==='Enter') handleRegistrar()">
+    </div>
+    <div class="modal-footer" id="authFormRegisterFooter" style="display:none">
+      <button class="btn btn-primary" id="btnRegistrar" style="width:100%" onclick="handleRegistrar()">Criar conta</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL ONBOARDING -->
 <div class="modal-overlay" id="modalOnboarding" style="z-index:9999">
   <div class="modal" style="max-width:460px">
@@ -391,5 +443,6 @@
 </div>
 
 <script src="app.js"></script>
+<script src="supabase.js"></script>
 </body>
 </html>

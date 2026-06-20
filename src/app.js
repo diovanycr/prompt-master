@@ -81,60 +81,124 @@ let secaoContent = {};
 // ═══════════════════════════════════
 // UPLOADS
 // ═══════════════════════════════════
-// guarda os arquivos originais enviados, para permitir download posterior
+// UPLOADS + PERSISTÊNCIA DE IMAGENS
+// ═══════════════════════════════════
 const uploadedFiles = {};
 
+// mapa: inputId → chave no localStorage
+const IMG_KEYS = {
+  fotoAtleta: 'pm_img_atleta',
+  logo1:      'pm_img_logo1',
+  logo2:      'pm_img_logo2'
+};
+
+// mapa reverso para restauração
+const IMG_META = {
+  fotoAtleta: { prevId:'prev-atleta', txtId:'txt-atleta', boxId:'box-atleta', obrigatorio:true,  label:'foto-atleta' },
+  logo1:      { prevId:'prev-logo1',  txtId:'txt-logo1',  boxId:'box-logo1',  obrigatorio:true,  label:'escudo-clube' },
+  logo2:      { prevId:'prev-logo2',  txtId:'txt-logo2',  boxId:'box-logo2',  obrigatorio:false, label:'escudo-adversario' }
+};
+
+function aplicarImagemUI(inputId, src){
+  const m = IMG_META[inputId]; if(!m) return;
+  const img = document.getElementById(m.prevId);
+  img.src = src; img.style.display = 'block';
+  document.getElementById(m.txtId).style.display = 'none';
+  const box = document.getElementById(m.boxId);
+  box.classList.add('has-img');
+  if(m.obrigatorio) box.classList.remove('missing');
+  const rmBtn = document.getElementById('rm-' + inputId);
+  if(rmBtn) rmBtn.style.display = 'flex';
+}
+
 function setupUpload(inputId, prevId, txtId, boxId, obrigatorio){
-  document.getElementById(inputId).addEventListener('change', e => {
-    const f = e.target.files[0];
-    if(!f) return;
+  document.getElementById(inputId).addEventListener('change', async e => {
+    const f = e.target.files[0]; if(!f) return;
     uploadedFiles[inputId] = f;
-    const img = document.getElementById(prevId);
-    img.src = URL.createObjectURL(f);
-    img.style.display = 'block';
-    document.getElementById(txtId).style.display = 'none';
-    const box = document.getElementById(boxId);
-    box.classList.add('has-img');
-    if(obrigatorio) box.classList.remove('missing');
+    // mostra preview imediatamente com URL temporária
+    aplicarImagemUI(inputId, URL.createObjectURL(f));
     checkWarnings();
     atualizarBotaoBaixarImgs();
+    // comprime e salva no localStorage em background
+    try {
+      const maxPx = inputId === 'fotoAtleta' ? 900 : 500;
+      const b64 = await comprimirImagem(f, maxPx);
+      localStorage.setItem(IMG_KEYS[inputId], b64);
+      // substitui a URL temporária pela base64 persistida
+      document.getElementById(prevId).src = b64;
+      mostrarToast('💾 Imagem salva permanentemente!', 'success');
+    } catch(err){
+      mostrarToast('⚠️ Imagem salva só na sessão atual (localStorage cheio?)', 'warn');
+    }
   });
 }
 setupUpload('fotoAtleta','prev-atleta','txt-atleta','box-atleta',true);
 setupUpload('logo1','prev-logo1','txt-logo1','box-logo1',true);
 setupUpload('logo2','prev-logo2','txt-logo2','box-logo2',false);
 
+function restaurarImagensLS(){
+  let restauradas = 0;
+  Object.keys(IMG_KEYS).forEach(inputId => {
+    const b64 = localStorage.getItem(IMG_KEYS[inputId]);
+    if(!b64) return;
+    aplicarImagemUI(inputId, b64);
+    restauradas++;
+  });
+  if(restauradas) { checkWarnings(); atualizarBotaoBaixarImgs(); }
+}
+
+function removerImagem(inputId){
+  localStorage.removeItem(IMG_KEYS[inputId]);
+  delete uploadedFiles[inputId];
+  const m = IMG_META[inputId]; if(!m) return;
+  const img = document.getElementById(m.prevId);
+  img.src = ''; img.style.display = 'none';
+  document.getElementById(m.txtId).style.display = '';
+  const box = document.getElementById(m.boxId);
+  box.classList.remove('has-img');
+  if(m.obrigatorio) box.classList.add('missing');
+  const rmBtn = document.getElementById('rm-' + inputId);
+  if(rmBtn) rmBtn.style.display = 'none';
+  document.getElementById(inputId).value = '';
+  checkWarnings();
+  atualizarBotaoBaixarImgs();
+  mostrarToast('🗑️ Imagem removida', '');
+}
+
 function atualizarBotaoBaixarImgs(){
   const btn = document.getElementById('btnBaixarImgs');
-  const temAlguma = Object.keys(uploadedFiles).length > 0;
-  btn.style.display = temAlguma ? 'block' : 'none';
+  const temFile = Object.keys(uploadedFiles).length > 0;
+  const temLS = Object.values(IMG_KEYS).some(k => localStorage.getItem(k));
+  btn.style.display = (temFile || temLS) ? 'block' : 'none';
 }
 
 function baixarImagens(){
-  const labels = { fotoAtleta: 'foto-atleta', logo1: 'escudo-prospere', logo2: 'escudo-adversario' };
-  const nomes = Object.keys(uploadedFiles);
-  if(!nomes.length){ mostrarToast('⚠️ Nenhuma imagem enviada ainda','warn'); return; }
-
   const advSlug = (v('adv') || 'partida').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-
-  nomes.forEach((key, i) => {
-    const file = uploadedFiles[key];
-    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-    const label = labels[key] || key;
-    const url = URL.createObjectURL(file);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${label}-${advSlug}.${ext}`;
-    document.body.appendChild(a);
-    // pequeno delay entre cliques para evitar que o navegador bloqueie downloads múltiplos simultâneos
+  let count = 0;
+  Object.keys(IMG_META).forEach((inputId, i) => {
+    const m = IMG_META[inputId];
+    const file = uploadedFiles[inputId];
+    const b64 = localStorage.getItem(IMG_KEYS[inputId]);
+    if(!file && !b64) return;
+    count++;
     setTimeout(() => {
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, i * 300);
+      const a = document.createElement('a');
+      if(file){
+        a.href = URL.createObjectURL(file);
+        a.download = `${m.label}-${advSlug}.${(file.name.split('.').pop()||'jpg').toLowerCase()}`;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      } else {
+        a.href = b64;
+        a.download = `${m.label}-${advSlug}.jpg`;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+      }
+    }, i * 350);
   });
-
-  mostrarToast(`📥 Baixando ${nomes.length} imagem(ns)...`, 'success');
+  if(!count){ mostrarToast('⚠️ Nenhuma imagem disponível','warn'); return; }
+  mostrarToast(`📥 Baixando ${count} imagem(ns)...`, 'success');
 }
 
 function checkWarnings(){
@@ -1327,7 +1391,8 @@ function compartilharWhatsApp(){
 // ═══════════════════════════════════
 const BACKUP_KEYS = ['prospere_partidas','prospere_prompts','prospere_favs','prospere_tags',
   'prospere_advs','prospere_frases','prospere_profiles','prospere_draft',
-  'prospere_theme','prospere_resultados','prospere_templates'];
+  'prospere_theme','prospere_resultados','prospere_templates',
+  'pm_img_atleta','pm_img_logo1','pm_img_logo2'];
 
 function exportarBackup(){
   const backup = { _exportadoEm: new Date().toISOString(), _versao: 'V1' };
@@ -1734,8 +1799,22 @@ function verificarOnboarding(){
 function finalizarOnboarding(){
   const nome = document.getElementById('ob-nome').value.trim();
   const clube = document.getElementById('ob-clube').value.trim();
-  if(!nome || !clube){
-    mostrarToast('⚠️ Nome do atleta e clube são obrigatórios','warn');
+  // destaca visualmente os campos obrigatórios vazios
+  const obrigatorios = [
+    { id: 'ob-nome',  val: nome },
+    { id: 'ob-clube', val: clube }
+  ];
+  let temErro = false;
+  obrigatorios.forEach(({ id, val }) => {
+    const el = document.getElementById(id);
+    if(!val){
+      el.classList.add('input-error');
+      el.addEventListener('input', () => el.classList.remove('input-error'), { once: true });
+      temErro = true;
+    }
+  });
+  if(temErro){
+    mostrarToast('⚠️ Preencha os campos obrigatórios destacados em vermelho','warn');
     return;
   }
   document.getElementById('nome').value = nome;
@@ -1774,6 +1853,7 @@ function atualizarSubtitle(){
     if(btn){ btn.textContent = idioma === 'en' ? '🇺🇸' : '🇧🇷'; btn.title = idioma === 'en' ? 'Prompt em inglês' : 'Prompt em português'; }
   }, {once:true});
 })();
+restaurarImagensLS();
 renderHistory();
 atualizarAdvList();
 renderFrasesCustom();
@@ -1782,4 +1862,4 @@ renderTemplateList();
 restoreDraft();
 carregarPromptDaURL();
 atualizarSubtitle();
-verificarOnboarding();
+// verificarOnboarding() é chamado pelo supabase.js após login/cadastro

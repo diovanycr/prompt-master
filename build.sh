@@ -11,6 +11,9 @@ with open('src/style.css', 'r', encoding='utf-8') as f:
 with open('src/app.js', 'r', encoding='utf-8') as f:
     js = f.read()
 
+with open('src/supabase.js', 'r', encoding='utf-8') as f:
+    sb_js = f.read()
+
 with open('src/index.html', 'r', encoding='utf-8') as f:
     html = f.read()
 
@@ -21,6 +24,10 @@ html = html.replace(
 html = html.replace(
     '<script src="app.js"></script>',
     f'<script>\n{js}\n</script>'
+)
+html = html.replace(
+    '<script src="supabase.js"></script>',
+    f'<script>\n{sb_js}\n</script>'
 )
 # Remove manifest/SW references (not needed in standalone file)
 html = html.replace('<link rel="manifest" href="manifest.json">\n', '')

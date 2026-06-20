@@ -245,6 +245,29 @@ select option{background:#fff}
 .ph-search{width:100%;background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 11px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:500;outline:none;margin-bottom:10px;transition:border-color .2s}
 .ph-search:focus{border-color:var(--border2)}
 
+/* CAMPO COM ERRO */
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.input-error{border-color:#e05252!important;background:rgba(224,82,82,.07)!important;animation:shake .35s ease}
+.input-error::placeholder{color:#e05252!important}
+
+/* AUTH MODAL */
+/* Auth gate — modal de login obrigatório */
+#modalAuth.open{background:rgba(0,0,0,.75);backdrop-filter:blur(6px)}
+
+.auth-tab{flex:1;padding:10px;background:none;border:none;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px}
+.auth-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.auth-tab:hover{color:var(--text)}
+.link-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:600;text-decoration:underline;padding:0}
+.link-btn:hover{color:var(--gold)}
+#authFormRegister{display:none}
+#authFormRegisterFooter{display:none}
+#authFormLogin ~ #authFormLoginFooter{}
+
+/* BOTÃO REMOVER IMAGEM */
+.img-remove-btn{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:10px;font-weight:900;cursor:pointer;align-items:center;justify-content:center;line-height:1;z-index:10;transition:background .15s;padding:0}
+.img-remove-btn:hover{background:rgba(220,40,40,.9)}
+.upload-box{position:relative}
+
 /* FILTRO FAVORITOS ATIVO */
 .active-filter{background:var(--gold)!important;color:#000!important;border-color:var(--gold)!important}
 
