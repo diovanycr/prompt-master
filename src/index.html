@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prompt Master Prospere V6</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-icon">⚽</div>
+  <div>
+    <h1>Prompt Master Prospere</h1>
+    <p>Gerador profissional para campanhas do Kaio Genaro</p>
+  </div>
+  <div class="header-right">
+    <div class="gen-counter">Geração #<span id="genNum">0</span></div>
+    <button class="dark-toggle" id="dashboardBtn" onclick="abrirDashboard()" title="Ver estatísticas de uso" style="margin-right:-4px">📊</button>
+    <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Alternar dark mode">🌙</button>
+    <span class="badge">V6</span>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<div class="sidebar">
+
+  <!-- UPLOADS -->
+  <div class="section">
+    <div class="sec-title">Imagens de Referência</div>
+    <div class="uploads-grid">
+      <div class="upload-box missing" id="box-atleta" onclick="document.getElementById('fotoAtleta').click()">
+        <div class="upload-warn">!</div>
+        <img id="prev-atleta" style="display:none">
+        <p id="txt-atleta">📸 Foto<br>Atleta</p>
+        <input type="file" id="fotoAtleta" accept="image/*">
+      </div>
+      <div class="upload-box missing" id="box-logo1" onclick="document.getElementById('logo1').click()">
+        <div class="upload-warn">!</div>
+        <img id="prev-logo1" style="display:none">
+        <p id="txt-logo1">🛡️ Escudo<br>Prospere</p>
+        <input type="file" id="logo1" accept="image/*">
+      </div>
+      <div class="upload-box" id="box-logo2" onclick="document.getElementById('logo2').click()">
+        <div class="upload-warn">!</div>
+        <img id="prev-logo2" style="display:none">
+        <p id="txt-logo2">🛡️ Escudo<br>Adversário</p>
+        <input type="file" id="logo2" accept="image/*">
+      </div>
+    </div>
+    <p style="font-size:10px;color:var(--muted);font-weight:600">⚠️ Itens com ! precisam de imagem</p>
+    <button class="btn btn-sec" id="btnBaixarImgs" style="width:100%;margin-top:8px;font-size:11px;padding:8px;display:none" onclick="baixarImagens()">📥 Baixar imagens enviadas</button>
+    <p style="font-size:10px;color:var(--muted);margin-top:4px">💡 Lembre-se de anexar a foto junto com o prompt na hora de gerar a arte.</p>
+  </div>
+
+  <!-- ATLETA -->
+  <div class="section">
+    <div class="sec-title">Atleta & Clube</div>
+    <div class="row2">
+      <div><label>Nome do atleta</label><input type="text" id="nome" value="Kaio Genaro"></div>
+      <div><label>Categoria</label><input type="text" id="categoria" value="Sub-8"></div>
+    </div>
+    <label>Clube</label>
+    <input type="text" id="clube" value="Prospere Hortolândia Futsal">
+    <label>Campeonato</label>
+    <input type="text" id="campeonato" value="Campeonato Paulista A1 de Futsal 2026">
+    <div class="row2">
+      <div>
+        <label>Cor uniforme (principal)</label>
+        <input type="text" id="uniforme1" placeholder="ex: azul royal">
+      </div>
+      <div>
+        <label>Cor uniforme (detalhe)</label>
+        <input type="text" id="uniforme2" placeholder="ex: branco">
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA -->
+  <div class="section">
+    <div class="sec-title">Partida</div>
+    <label>Adversário</label>
+    <input type="text" id="adv" placeholder="Ex: Sorocaba Futsal" list="advList">
+    <datalist id="advList"></datalist>
+    <div class="row2">
+      <div><label>Data</label><input type="text" id="data" placeholder="dd/mm/aaaa"></div>
+      <div><label>Horário</label><input type="text" id="hora" placeholder="00h00"></div>
+    </div>
+    <label>Local</label>
+    <input type="text" id="local" placeholder="Ginásio Municipal...">
+  </div>
+
+  <!-- INTENSIDADE -->
+  <div class="section">
+    <div class="sec-title">Nível de Intensidade</div>
+    <div class="intensity-bar">
+      <button class="int-btn" data-val="Celebracao" onclick="setIntensidade(this)">🎉 Celebração</button>
+      <button class="int-btn active-confronto" data-val="Confronto" onclick="setIntensidade(this)">🔥 Confronto</button>
+      <button class="int-btn" data-val="Institucional" onclick="setIntensidade(this)">🏆 Institucional</button>
+    </div>
+    <p id="int-desc" style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:2px">
+      Arte épica de confronto: energia máxima, expressão determinada, arena de batalha.
+    </p>
+  </div>
+
+  <!-- FORMATO -->
+  <div class="section">
+    <div class="sec-title">Formato & Visual</div>
+    <label>Tipo de arte</label>
+    <div class="toggle-group" id="tipoGroup">
+      <button class="toggle active" data-val="Instagram Story 9:16">Story 9:16</button>
+      <button class="toggle" data-val="Feed Instagram 4:5">Feed 4:5</button>
+      <button class="toggle" data-val="Banner horizontal">Banner</button>
+      <button class="toggle" data-val="Card MVP">MVP</button>
+      <button class="toggle" data-val="Card Convocação">Convocação</button>
+    </div>
+
+    <label>Ferramenta de destino</label>
+    <div class="toggle-group" id="ferramentaGroup">
+      <button class="toggle active" data-val="Generico">🌐 Genérico</button>
+      <button class="toggle" data-val="Midjourney">🎨 Midjourney</button>
+      <button class="toggle" data-val="ChatGPT">💬 ChatGPT</button>
+      <button class="toggle" data-val="Gemini">✨ Gemini</button>
+    </div>
+
+    <label>Paleta de cores</label>
+    <div class="toggle-group" id="paletaGroup">
+      <button class="toggle gold active" data-val="IA escolhe automaticamente a paleta mais impactante">🎲 IA Escolhe</button>
+      <button class="toggle" data-val="azul royal e dourado">Azul & Ouro</button>
+      <button class="toggle" data-val="preto e dourado premium">Preto & Ouro</button>
+      <button class="toggle" data-val="grafite e prata metálica">Grafite Prata</button>
+      <button class="toggle" data-val="azul royal e branco">Azul Branco</button>
+      <button class="toggle" data-val="vermelho e preto">Vermelho Preto</button>
+    </div>
+  </div>
+
+  <!-- AÇÃO & ÂNGULO -->
+  <div class="section">
+    <div class="sec-title">Ação & Câmera</div>
+    <label>Ação do atleta</label>
+    <div class="toggle-group" id="acaoGroup">
+      <button class="toggle gold active" data-val="IA escolhe automaticamente">🎲 IA Escolhe</button>
+      <button class="toggle" data-val="conduzindo a bola">Conduzindo</button>
+      <button class="toggle" data-val="finalizando a gol">Finalizando</button>
+      <button class="toggle" data-val="driblando o adversário">Driblando</button>
+      <button class="toggle" data-val="comemorando gol">Comemorando</button>
+      <button class="toggle" data-val="correndo em velocidade">Correndo</button>
+    </div>
+    <label>Ângulo de câmera</label>
+    <div class="toggle-group" id="anguloGroup">
+      <button class="toggle gold active" data-val="IA varia automaticamente o ângulo">🎲 IA Varia</button>
+      <button class="toggle" data-val="low angle dramático">Low Angle</button>
+      <button class="toggle" data-val="eye level esportivo">Eye Level</button>
+      <button class="toggle" data-val="dynamic side angle">Side Angle</button>
+      <button class="toggle" data-val="cinematic tracking shot">Tracking</button>
+      <button class="toggle" data-val="dramatic close-up no atleta">Close-up</button>
+    </div>
+  </div>
+
+  <!-- FRASE -->
+  <div class="section">
+    <div class="sec-title">Frase de Impacto</div>
+    <div id="frasesList">
+      <div class="frase-chip sel" onclick="selecionarFrase(this)">🎲 IA cria frase inédita automaticamente</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">O futuro começa com um sonho e uma bola</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">Talento não se compra, se conquista</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">Cada treino é um passo rumo à glória</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">Nascido para o futsal, destinado à vitória</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">Pequeno no tamanho, gigante no coração</div>
+    </div>
+    <div id="frasesCustomList"></div>
+    <label style="margin-top:6px">Ou escreva sua frase</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="fraseCustom" placeholder="Digite uma frase personalizada..." style="flex:1">
+      <button class="btn btn-sec" style="padding:8px 10px;font-size:11px" onclick="adicionarFraseBanco()" title="Salvar esta frase no banco para reutilizar depois">➕</button>
+    </div>
+  </div>
+
+  <!-- HISTORICO DE PARTIDAS -->
+  <div class="section">
+    <div class="sec-title">Histórico de Partidas</div>
+    <div id="historyList">
+      <p style="font-size:12px;color:var(--muted)">Nenhuma partida salva ainda.</p>
+    </div>
+  </div>
+
+  <!-- FERRAMENTAS -->
+  <div class="section">
+    <div class="sec-title">Ferramentas</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn btn-sec" style="font-size:11px;padding:8px" onclick="exportarConfig()">⬇️ Exportar config (.json)</button>
+      <button class="btn btn-sec" style="font-size:11px;padding:8px" onclick="document.getElementById('importFile').click()">⬆️ Importar config (.json)</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarConfig(event)">
+      <button class="btn btn-sec" style="font-size:11px;padding:8px" onclick="compartilharLink()">🔗 Compartilhar prompt via link</button>
+    </div>
+  </div>
+
+</div>
+<!-- / SIDEBAR -->
+
+<!-- ══════════════ OUTPUT ══════════════ -->
+<div class="output-area">
+
+  <div class="output-tabs">
+    <button class="otab active" onclick="switchTab('secoes',this)">📋 Seções</button>
+    <button class="otab" onclick="switchTab('preview',this)">👁️ Preview</button>
+    <button class="otab" onclick="switchTab('raw',this)">💻 Completo</button>
+    <button class="otab" onclick="switchTab('phistory',this)">🗂️ Histórico</button>
+  </div>
+
+  <div class="warn-banner" id="warnBanner">
+    <span>⚠️</span><span id="warnMsg">Atenção: imagens obrigatórias não enviadas</span>
+  </div>
+
+  <div class="output-toolbar">
+    <span class="lbl" id="toolbarLabel">Seções do prompt — clique para expandir e editar</span>
+    <span class="char-count" id="charCount">0 chars</span>
+    <span class="token-count" id="tokenCount">~0 tokens</span>
+    <span class="shortcuts-hint">
+      <span><span class="kbd">Ctrl+↵</span> Gerar</span>
+      <span><span class="kbd">Ctrl+C</span> Copiar</span>
+      <span><span class="kbd">Ctrl+S</span> Salvar</span>
+    </span>
+  </div>
+
+  <!-- TAB: SECOES -->
+  <div class="prompt-sections" id="tab-secoes">
+    <!-- preenchido por JS -->
+  </div>
+
+  <!-- TAB: PREVIEW -->
+  <div class="preview-tab-content" id="tab-preview">
+    <!-- preenchido por JS -->
+  </div>
+
+  <!-- TAB: RAW -->
+  <textarea id="rawOut" placeholder="Gere um prompt primeiro..."></textarea>
+
+  <!-- TAB: PROMPT HISTORY -->
+  <div class="ph-tab-content" id="tab-phistory">
+    <div class="ph-empty" id="phEmpty">Nenhum prompt salvo ainda.<br>Clique em 💾 Salvar após gerar.</div>
+  </div>
+
+  <div class="btn-bar" style="position:relative">
+    <button class="btn btn-primary" onclick="gerar()" title="Ctrl+Enter">⚡ Gerar</button>
+    <button class="btn btn-random" onclick="gerarAleatorio()" title="Variação rápida — sorteia categorias destravadas">🎲 Variação</button>
+    <button class="btn btn-sec" onclick="toggleLockPanel()" title="Travar categorias para não variarem">🔒 Travas</button>
+    <button class="btn btn-sec" onclick="copiar()" title="Ctrl+C">📋 Copiar</button>
+    <button class="btn btn-sec" onclick="salvarPartida()" title="Ctrl+S">💾 Salvar</button>
+    <button class="btn btn-sec" onclick="abrirComparacao()" title="Comparar geração atual com anterior">⇄ Comparar</button>
+    <button class="btn btn-sec" onclick="limparRascunho()" title="Limpar todos os campos">🧹 Limpar</button>
+    <button class="btn btn-gold" onclick="exportarPDF()">📄 PDF</button>
+
+    <div class="lock-panel" id="lockPanel">
+      <div class="lock-panel-title">Travar categorias na Variação 🎲</div>
+      <div class="lock-row" data-key="paleta"><span>🎨 Paleta de cores</span><button class="lock-btn" onclick="toggleTravamento('paleta',this)">🔓</button></div>
+      <div class="lock-row" data-key="acao"><span>⚡ Ação do atleta</span><button class="lock-btn" onclick="toggleTravamento('acao',this)">🔓</button></div>
+      <div class="lock-row" data-key="angulo"><span>📷 Ângulo de câmera</span><button class="lock-btn" onclick="toggleTravamento('angulo',this)">🔓</button></div>
+      <div class="lock-row" data-key="cenario"><span>🏟️ Cenário</span><button class="lock-btn" onclick="toggleTravamento('cenario',this)">🔓</button></div>
+      <div class="lock-row" data-key="layout"><span>📐 Layout/Composição</span><button class="lock-btn" onclick="toggleTravamento('layout',this)">🔓</button></div>
+      <div class="lock-row" data-key="iluminacao"><span>💡 Iluminação</span><button class="lock-btn" onclick="toggleTravamento('iluminacao',this)">🔓</button></div>
+      <div class="lock-row" data-key="tipografia"><span>✍️ Tipografia</span><button class="lock-btn" onclick="toggleTravamento('tipografia',this)">🔓</button></div>
+      <p style="font-size:10px;color:var(--muted);margin-top:8px">🔒 = não será sorteado na próxima Variação. Identidade, rosto, escudos e uniforme nunca variam.</p>
+    </div>
+  </div>
+
+</div>
+<!-- / OUTPUT -->
+
+</div>
+
+<!-- MODAL COMPARAÇÃO -->
+<div class="modal-overlay" id="modalComparacao">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⇄ Comparar Gerações</span>
+      <button class="modal-close" onclick="fecharComparacao()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-col">
+        <div class="modal-col-header">Geração Anterior</div>
+        <textarea id="compareLeft" placeholder="Nenhuma geração anterior salva..."></textarea>
+      </div>
+      <div class="modal-col">
+        <div class="modal-col-header">Geração Atual</div>
+        <textarea id="compareRight" placeholder="Gere um prompt primeiro..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="usarAnterior()">← Usar Anterior</button>
+      <button class="btn btn-primary" onclick="fecharComparacao()">✓ Manter Atual</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DASHBOARD -->
+<div class="modal-overlay" id="modalDashboard">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">📊 Estatísticas de Uso</span>
+      <button class="modal-close" onclick="fecharDashboard()">✕</button>
+    </div>
+    <div class="modal-body" style="display:block;overflow-y:auto;padding:20px">
+      <div id="dashboardContent"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="fecharDashboard()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
