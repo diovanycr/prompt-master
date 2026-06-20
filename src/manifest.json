@@ -1,7 +1,7 @@
 {
-  "name": "Prompt Master Prospere",
+  "name": "Prompt Master Futsal",
   "short_name": "PromptMaster",
-  "description": "Gerador profissional de prompts para artes esportivas do Kaio Genaro",
+  "description": "Gerador de prompts para marketing esportivo de futsal",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f9f9f8",

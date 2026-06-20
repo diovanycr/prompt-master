@@ -140,7 +140,7 @@ function baixarImagens(){
 function checkWarnings(){
   const missing = [];
   if(!document.getElementById('box-atleta').classList.contains('has-img')) missing.push('foto do atleta');
-  if(!document.getElementById('box-logo1').classList.contains('has-img')) missing.push('escudo Prospere');
+  if(!document.getElementById('box-logo1').classList.contains('has-img')) missing.push('escudo do clube');
   const banner = document.getElementById('warnBanner');
   if(missing.length){
     document.getElementById('warnMsg').textContent = '⚠️ Pendente: ' + missing.join(', ');
@@ -345,10 +345,10 @@ function gerar(aleatorio){
     if(problemas.length) mostrarToast('⚠️ Faltando: ' + problemas.join(', '), 'warn');
   }
 
-  const nome = v('nome') || 'Kaio Genaro';
-  const clube = v('clube') || 'Prospere Hortolândia Futsal';
-  const categoria = v('categoria') || 'Sub-8';
-  const campeonato = v('campeonato') || 'Campeonato Paulista A1 de Futsal 2026';
+  const nome = v('nome') || 'Atleta';
+  const clube = v('clube') || 'Clube';
+  const categoria = v('categoria') || '';
+  const campeonato = v('campeonato') || 'Campeonato de Futsal';
   const adv = v('adv') || '[ADVERSÁRIO]';
   registrarAdversario(v('adv'));
   const data = v('data') || '[DATA]';
@@ -438,7 +438,7 @@ function gerar(aleatorio){
 
   const base_fidelidade = `${tx('FIDELIDADE FACIAL MÁXIMA (OBRIGATÓRIO)','MAXIMUM FACIAL FIDELITY (MANDATORY)')}${fotoWarn}\n${'─'.repeat(40)}\n\n${tx('UTILIZAR A FOTO ENVIADA COMO REFERÊNCIA PRINCIPAL DO ATLETA.\nPreservar identidade facial com máxima fidelidade possível.','USE THE UPLOADED PHOTO AS THE MAIN REFERENCE FOR THE ATHLETE.\nPreserve facial identity with maximum possible fidelity.')}\n\n${tx('MANTER EXATAMENTE:','KEEP EXACTLY:')}\n${tx('• formato do rosto • cabelo e linha do cabelo\n• sobrancelhas • olhos • nariz e boca • sorriso\n• tom de pele • idade aparente\n• proporções e características físicas reais • expressão natural','• face shape • hair and hairline\n• eyebrows • eyes • nose and mouth • smile\n• skin tone • apparent age\n• real physical proportions and features • natural expression')}\n\n${tx('NÃO:','DO NOT:')}\n${tx('• estilizar • cartoonizar • transformar em personagem digital\n• criar rosto genérico • aplicar filtros artificiais\n\nO atleta final deve ser imediatamente reconhecível como a criança da foto enviada.','• stylize • cartoonize • transform into a digital character\n• create a generic face • apply artificial filters\n\nThe final athlete must be immediately recognizable as the child from the uploaded photo.')}`;
 
-  const base_uniforme = `${tx('UNIFORME DO ATLETA','ATHLETE UNIFORM')}${logo1Warn}\n${'─'.repeat(40)}\n\n${tx('Vestir o atleta com o uniforme oficial:','Dress the athlete in the official uniform:')} ${uniformeDesc}.\n${hasLogo1 ? tx('Usar o escudo enviado como referência para a identidade visual do uniforme.','Use the uploaded badge as reference for the uniform visual identity.') : tx('ATENÇÃO: escudo Prospere não enviado — usar identidade visual baseada nas cores informadas.','WARNING: Prospere badge not uploaded — use visual identity based on the informed colors.')}\n${tx('Manter uniformidade com a identidade visual do','Maintain consistency with the visual identity of')} ${clube}.`;
+  const base_uniforme = `${tx('UNIFORME DO ATLETA','ATHLETE UNIFORM')}${logo1Warn}\n${'─'.repeat(40)}\n\n${tx('Vestir o atleta com o uniforme oficial:','Dress the athlete in the official uniform:')} ${uniformeDesc}.\n${hasLogo1 ? tx('Usar o escudo enviado como referência para a identidade visual do uniforme.','Use the uploaded badge as reference for the uniform visual identity.') : tx('ATENÇÃO: escudo do clube não enviado — usar identidade visual baseada nas cores informadas.','WARNING: club badge not uploaded — use visual identity based on the informed colors.')}\n${tx('Manter uniformidade com a identidade visual do','Maintain consistency with the visual identity of')} ${clube}.`;
 
   const base_paleta = `${tx('PALETA DE CORES','COLOR PALETTE')}\n${'─'.repeat(40)}\n\n${tx('Paleta escolhida','Chosen palette')}: ${paleta}\n\n${tx('Opções aceitas:\n• azul e dourado • azul e prata • preto e dourado\n• grafite e prata • vermelho e preto • azul royal e branco\n• roxo neon • verde esmeralda premium\n• combinações cinematográficas exclusivas','Accepted options:\n• blue and gold • blue and silver • black and gold\n• graphite and silver • red and black • royal blue and white\n• neon purple • premium emerald green\n• exclusive cinematic combinations')}`;
 
@@ -660,6 +660,29 @@ function salvarPartida(){
   mostrarToast('💾 Partida e prompt salvos!','success');
 }
 
+function atualizarProximoJogo(){
+  const h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
+  const el = document.getElementById('proximoJogo');
+  if(!el) return;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  let prox = null;
+  let proxDiff = Infinity;
+  for(const item of h){
+    if(!item.data) continue;
+    const parts = item.data.split('/');
+    if(parts.length < 3) continue;
+    const d = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+    d.setHours(0,0,0,0);
+    const diff = Math.round((d - hoje) / 86400000);
+    if(diff >= 0 && diff < proxDiff){ proxDiff = diff; prox = item; }
+  }
+  if(!prox){ el.style.display='none'; return; }
+  const label = proxDiff === 0 ? 'Hoje!' : proxDiff === 1 ? 'Amanhã' : `${proxDiff}d`;
+  const color = proxDiff === 0 ? 'var(--red)' : proxDiff <= 3 ? 'var(--orange)' : 'var(--green)';
+  el.style.display = 'inline-flex';
+  el.innerHTML = `<span style="color:${color};font-weight:800">⚽ ${label}</span><span style="color:var(--muted);font-size:10px;margin-left:4px">${esc(prox.adv||'')}</span>`;
+}
+
 function diasRestantes(dataStr){
   if(!dataStr) return null;
   const parts = dataStr.split('/');
@@ -675,6 +698,7 @@ function diasRestantes(dataStr){
 }
 
 function renderHistory(){
+  atualizarProximoJogo();
   const h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
   const el = document.getElementById('historyList');
   if(!h.length){ el.innerHTML='<p style="font-size:12px;color:var(--muted)">Nenhuma partida salva ainda.</p>'; return; }
@@ -710,6 +734,7 @@ function deletarPartida(ts){
 // HISTORICO DE PROMPTS
 // ═══════════════════════════════════
 let phSearchQuery = '';
+let phFavsOnly = false;
 
 function renderPromptHistory(){
   const ph = JSON.parse(localStorage.getItem('prospere_prompts') || '[]');
@@ -724,9 +749,20 @@ function renderPromptHistory(){
   }
 
   const q = phSearchQuery.toLowerCase().trim();
-  const filtrado = q
-    ? ph.filter(p => (p.adv||'').toLowerCase().includes(q) || (p.data||'').includes(q))
-    : ph;
+
+  // busca por #tag especial
+  const tagFilter = q.startsWith('#') ? q.slice(1) : null;
+  const TAG_KEYS = ['bom','ruim','usado','fav'];
+  const isTagSearch = tagFilter && TAG_KEYS.includes(tagFilter);
+
+  let filtrado = ph;
+  if(phFavsOnly || (isTagSearch && tagFilter === 'fav')){
+    filtrado = filtrado.filter(p => favs.includes(p.ts));
+  } else if(isTagSearch){
+    filtrado = filtrado.filter(p => (tags[p.ts]||[]).includes(tagFilter));
+  } else if(q){
+    filtrado = filtrado.filter(p => (p.adv||'').toLowerCase().includes(q) || (p.data||'').includes(q));
+  }
 
   // favoritos primeiro
   const sorted = [...filtrado].sort((a,b) => {
@@ -772,10 +808,14 @@ function renderPromptHistory(){
   const emptyMsg = q && !sorted.length ? `<div class="ph-empty">Nenhum resultado para "<strong>${esc(q)}</strong>"</div>` : '';
 
   container.innerHTML = `
-    <input class="ph-search" placeholder="🔍 Buscar por adversário ou data..." value="${esc(phSearchQuery)}" oninput="phSearchQuery=this.value;renderPromptHistory()">
-    <div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:11px;color:var(--muted);font-weight:700">${filtrado.length}/${ph.length} prompts · ${favs.length} favoritos</span>
-      <button class="btn btn-sec" style="padding:5px 10px;font-size:10px" onclick="limparPrompts()">🗑️ Limpar tudo</button>
+    <input class="ph-search" placeholder="🔍 Buscar texto ou #bom #ruim #usado #fav..." value="${esc(phSearchQuery)}" oninput="phSearchQuery=this.value;renderPromptHistory()">
+    <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-sec ${phFavsOnly?'active-filter':''}" style="padding:4px 9px;font-size:10px;font-weight:700" onclick="phFavsOnly=!phFavsOnly;renderPromptHistory()" title="Mostrar só favoritos">${phFavsOnly?'⭐ Só favoritos':'☆ Todos'}</button>
+      <button class="btn btn-sec" style="padding:4px 9px;font-size:10px" onclick="phSearchQuery='#bom';renderPromptHistory()" title="Filtrar resultado bom">👍</button>
+      <button class="btn btn-sec" style="padding:4px 9px;font-size:10px" onclick="phSearchQuery='#usado';renderPromptHistory()" title="Filtrar usados">✅</button>
+      <button class="btn btn-sec" style="padding:4px 9px;font-size:10px" onclick="phSearchQuery='';phFavsOnly=false;renderPromptHistory()" title="Limpar filtros">✕ Limpar</button>
+      <span style="font-size:10px;color:var(--muted);font-weight:700;margin-left:auto">${filtrado.length}/${ph.length} · ${favs.length} ⭐</span>
+      <button class="btn btn-sec" style="padding:4px 9px;font-size:10px" onclick="limparPrompts()">🗑️</button>
     </div>${emptyMsg}${items}`;
 }
 
@@ -892,7 +932,7 @@ h2{font-family:Arial;font-size:18px;margin-bottom:6px;color:#1d6cff}
 .meta{font-size:12px;color:#888;margin-bottom:24px}
 hr{border:none;border-top:1px solid #eee;margin:20px 0}
 </style></head><body>
-<h2>⚽ Prompt Master Prospere V6</h2>
+<h2>⚽ Prompt Master Futsal</h2>
 <p class="meta">Atleta: ${v('nome')} · Adversário: ${v('adv')||'-'} · Data: ${v('data')||'-'} · Geração #${genCount}</p>
 <hr>
 <pre>${val.replace(/</g,'&lt;')}</pre>
@@ -1031,10 +1071,10 @@ function limparRascunho(){
   const DRAFT_FIELDS_LIST = ['nome','categoria','clube','campeonato','uniforme1','uniforme2','adv','data','hora','local','fraseCustom'];
   DRAFT_FIELDS_LIST.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   // restaura defaults
-  document.getElementById('nome').value = 'Kaio Genaro';
-  document.getElementById('categoria').value = 'Sub-8';
-  document.getElementById('clube').value = 'Prospere Hortolândia Futsal';
-  document.getElementById('campeonato').value = 'Campeonato Paulista A1 de Futsal 2026';
+  document.getElementById('nome').value = '';
+  document.getElementById('categoria').value = '';
+  document.getElementById('clube').value = '';
+  document.getElementById('campeonato').value = '';
   localStorage.removeItem('prospere_draft');
 
   // restaura toggles para o padrão (🎲 IA escolhe / primeira opção)
@@ -1126,7 +1166,7 @@ function exportarConfig(){
     nome: v('nome'), categoria: v('categoria'), clube: v('clube'), campeonato: v('campeonato'),
     uniforme1: v('uniforme1'), uniforme2: v('uniforme2'),
     paleta: getToggle('paletaGroup'), tipo: getToggle('tipoGroup'),
-    exportadoEm: new Date().toISOString(), versao: 'V6'
+    exportadoEm: new Date().toISOString(), versao: 'V1'
   };
   const blob = new Blob([JSON.stringify(config, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1162,6 +1202,30 @@ function importarConfig(event){
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+// ═══════════════════════════════════
+// GERAÇÃO EM LOTE
+// ═══════════════════════════════════
+function gerarLote(n=5){
+  const adv = v('adv') || 'Adversário';
+  const data = v('data') || new Date().toLocaleDateString('pt-BR');
+  mostrarToast(`⚙️ Gerando ${n} variações...`, 'success');
+  const enc = new TextEncoder();
+  const prompts = [];
+  for(let i=1; i<=n; i++){
+    gerar(true); // gera variação aleatória, atualiza secaoContent
+    const txt = buildFullPrompt();
+    prompts.push({ name:`prompt-lote-${i}-${adv.replace(/\s+/g,'-')}.txt`, data: enc.encode(txt) });
+  }
+  const zipBytes = buildZip(prompts);
+  const blob = new Blob([zipBytes], {type:'application/zip'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `lote-prompts-${adv.replace(/\s+/g,'-')}-${Date.now()}.zip`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  mostrarToast(`📦 ${n} prompts exportados no ZIP!`, 'success');
 }
 
 // ═══════════════════════════════════
@@ -1238,7 +1302,7 @@ async function agendarNotificacao(){
   const delay = notifTime.getTime() - now.getTime();
   clearTimeout(window._notifTimer);
   window._notifTimer = setTimeout(() => {
-    new Notification('⚽ Prompt Master Prospere', {
+    new Notification('⚽ Prompt Master Futsal', {
       body: `Jogo contra ${adv||'o adversário'} em 2 horas! Crie a arte agora.`,
       tag: 'pregame'
     });
@@ -1266,7 +1330,7 @@ const BACKUP_KEYS = ['prospere_partidas','prospere_prompts','prospere_favs','pro
   'prospere_theme','prospere_resultados','prospere_templates'];
 
 function exportarBackup(){
-  const backup = { _exportadoEm: new Date().toISOString(), _versao: 'V6' };
+  const backup = { _exportadoEm: new Date().toISOString(), _versao: 'V1' };
   BACKUP_KEYS.forEach(k => {
     const val = localStorage.getItem(k);
     if(val) try { backup[k] = JSON.parse(val); } catch(e){}
@@ -1659,6 +1723,47 @@ function mostrarToast(msg, type=''){
 }
 
 // ═══════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════
+function verificarOnboarding(){
+  if(localStorage.getItem('pm_setup')) return;
+  const modal = document.getElementById('modalOnboarding');
+  if(modal) modal.classList.add('open');
+}
+
+function finalizarOnboarding(){
+  const nome = document.getElementById('ob-nome').value.trim();
+  const clube = document.getElementById('ob-clube').value.trim();
+  if(!nome || !clube){
+    mostrarToast('⚠️ Nome do atleta e clube são obrigatórios','warn');
+    return;
+  }
+  document.getElementById('nome').value = nome;
+  document.getElementById('categoria').value = document.getElementById('ob-categoria').value.trim();
+  document.getElementById('clube').value = clube;
+  document.getElementById('campeonato').value = document.getElementById('ob-campeonato').value.trim();
+  document.getElementById('uniforme1').value = document.getElementById('ob-cor1').value.trim();
+  document.getElementById('uniforme2').value = document.getElementById('ob-cor2').value.trim();
+  // atualiza label placar e subtitle
+  atualizarSubtitle();
+  localStorage.setItem('pm_setup', '1');
+  document.getElementById('modalOnboarding').classList.remove('open');
+  mostrarToast(`✅ Configurado para ${nome} — ${clube}!`, 'success');
+}
+
+function atualizarSubtitle(){
+  const nome = v('nome'); const clube = v('clube');
+  const el = document.getElementById('headerSubtitle');
+  if(!el) return;
+  if(nome && clube) el.textContent = `${nome} · ${clube}`;
+  else if(clube) el.textContent = clube;
+  else el.textContent = 'Gerador de prompts para marketing esportivo';
+  // atualiza label do placar com nome do clube
+  const labelGols = document.getElementById('labelGolsNos');
+  if(labelGols && clube) labelGols.textContent = clube.split(' ')[0];
+}
+
+// ═══════════════════════════════════
 // INIT
 // ═══════════════════════════════════
 (function(){
@@ -1676,3 +1781,5 @@ renderProfileSelector();
 renderTemplateList();
 restoreDraft();
 carregarPromptDaURL();
+atualizarSubtitle();
+verificarOnboarding();

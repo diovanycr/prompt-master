@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUT="dist/prompt-master-v6.html"
+OUT="dist/prompt-master-futsal.html"
 mkdir -p dist
 
 python3 - <<'EOF'
@@ -26,9 +26,9 @@ html = html.replace(
 html = html.replace('<link rel="manifest" href="manifest.json">\n', '')
 html = html.replace("<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>\n", '')
 
-with open('dist/prompt-master-v6.html', 'w', encoding='utf-8') as f:
+with open('dist/prompt-master-futsal.html', 'w', encoding='utf-8') as f:
     f.write(html)
 
 size_kb = len(html.encode('utf-8')) / 1024
-print(f'✅ dist/prompt-master-v6.html  ({size_kb:.1f} KB)')
+print(f'✅ dist/prompt-master-futsal.html  ({size_kb:.1f} KB)')
 EOF

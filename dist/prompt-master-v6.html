@@ -253,6 +253,18 @@ select option{background:#fff}
 .ph-search{width:100%;background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 11px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:500;outline:none;margin-bottom:10px;transition:border-color .2s}
 .ph-search:focus{border-color:var(--border2)}
 
+/* FILTRO FAVORITOS ATIVO */
+.active-filter{background:var(--gold)!important;color:#000!important;border-color:var(--gold)!important}
+
+/* PRÓXIMO JOGO HEADER */
+#proximoJogo{transition:opacity .3s}
+
+/* TAGS DE PROMPT */
+.ph-tag-btn{font-size:11px;border:1px solid var(--border);background:var(--surface2);border-radius:5px;padding:2px 7px;cursor:pointer;opacity:.5;transition:all .15s;color:var(--text)}
+.ph-tag-btn.active{opacity:1;border-color:var(--gold);background:rgba(212,175,55,.15)}
+.ph-tag-btn.tag-bom.active{border-color:#4caf50;background:rgba(76,175,80,.15)}
+.ph-tag-btn.tag-ruim.active{border-color:#e05252;background:rgba(224,82,82,.15)}
+
 /* TEMPLATES */
 #templateList .history-item{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:5px;background:var(--surface2);margin-bottom:4px;border:1px solid var(--border)}
 #templateList .del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;padding:0 3px;line-height:1}
@@ -284,6 +296,7 @@ select option{background:#fff}
     <p>Gerador profissional para campanhas do Kaio Genaro</p>
   </div>
   <div class="header-right">
+    <span id="proximoJogo" style="display:none;align-items:center;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:700;cursor:default" title="Próximo jogo cadastrado"></span>
     <div class="gen-counter">Geração #<span id="genNum">0</span></div>
     <button class="dark-toggle" id="dashboardBtn" onclick="abrirDashboard()" title="Ver estatísticas de uso" style="margin-right:-4px">📊</button>
     <button class="dark-toggle" id="langToggle" onclick="toggleIdioma()" title="Prompt em português — clique para inglês" style="margin-right:-4px">🇧🇷</button>
@@ -562,6 +575,7 @@ select option{background:#fff}
     <button class="btn btn-sec" onclick="limparRascunho()" title="Limpar todos os campos">🧹 Limpar</button>
     <button class="btn btn-gold" onclick="exportarPDF()">📄 PDF</button>
     <button class="btn btn-gold" onclick="exportarKit()">📦 Kit</button>
+    <button class="btn btn-gold" onclick="gerarLote(5)" title="Gerar 5 variações e exportar como ZIP">📦 Semana</button>
 
     <div class="lock-panel" id="lockPanel">
       <div class="lock-panel-title">Travar categorias na Variação 🎲</div>
@@ -1286,6 +1300,29 @@ function salvarPartida(){
   mostrarToast('💾 Partida e prompt salvos!','success');
 }
 
+function atualizarProximoJogo(){
+  const h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
+  const el = document.getElementById('proximoJogo');
+  if(!el) return;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  let prox = null;
+  let proxDiff = Infinity;
+  for(const item of h){
+    if(!item.data) continue;
+    const parts = item.data.split('/');
+    if(parts.length < 3) continue;
+    const d = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+    d.setHours(0,0,0,0);
+    const diff = Math.round((d - hoje) / 86400000);
+    if(diff >= 0 && diff < proxDiff){ proxDiff = diff; prox = item; }
+  }
+  if(!prox){ el.style.display='none'; return; }
+  const label = proxDiff === 0 ? 'Hoje!' : proxDiff === 1 ? 'Amanhã' : `${proxDiff}d`;
+  const color = proxDiff === 0 ? 'var(--red)' : proxDiff <= 3 ? 'var(--orange)' : 'var(--green)';
+  el.style.display = 'inline-flex';
+  el.innerHTML = `<span style="color:${color};font-weight:800">⚽ ${label}</span><span style="color:var(--muted);font-size:10px;margin-left:4px">${esc(prox.adv||'')}</span>`;
+}
+
 function diasRestantes(dataStr){
   if(!dataStr) return null;
   const parts = dataStr.split('/');
@@ -1301,6 +1338,7 @@ function diasRestantes(dataStr){
 }
 
 function renderHistory(){
+  atualizarProximoJogo();
   const h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
   const el = document.getElementById('historyList');
   if(!h.length){ el.innerHTML='<p style="font-size:12px;color:var(--muted)">Nenhuma partida salva ainda.</p>'; return; }
@@ -1336,6 +1374,7 @@ function deletarPartida(ts){
 // HISTORICO DE PROMPTS
 // ═══════════════════════════════════
 let phSearchQuery = '';
+let phFavsOnly = false;
 
 function renderPromptHistory(){
   const ph = JSON.parse(localStorage.getItem('prospere_prompts') || '[]');
@@ -1350,9 +1389,20 @@ function renderPromptHistory(){
   }
 
   const q = phSearchQuery.toLowerCase().trim();
-  const filtrado = q
-    ? ph.filter(p => (p.adv||'').toLowerCase().includes(q) || (p.data||'').includes(q))
-    : ph;
+
+  // busca por #tag especial
+  const tagFilter = q.startsWith('#') ? q.slice(1) : null;
+  const TAG_KEYS = ['bom','ruim','usado','fav'];
+  const isTagSearch = tagFilter && TAG_KEYS.includes(tagFilter);
+
+  let filtrado = ph;
+  if(phFavsOnly || (isTagSearch && tagFilter === 'fav')){
+    filtrado = filtrado.filter(p => favs.includes(p.ts));
+  } else if(isTagSearch){
+    filtrado = filtrado.filter(p => (tags[p.ts]||[]).includes(tagFilter));
+  } else if(q){
+    filtrado = filtrado.filter(p => (p.adv||'').toLowerCase().includes(q) || (p.data||'').includes(q));
+  }
 
   // favoritos primeiro
   const sorted = [...filtrado].sort((a,b) => {
@@ -1398,10 +1448,14 @@ function renderPromptHistory(){
   const emptyMsg = q && !sorted.length ? `<div class="ph-empty">Nenhum resultado para "<strong>${esc(q)}</strong>"</div>` : '';
 
   container.innerHTML = `
-    <input class="ph-search" placeholder="🔍 Buscar por adversário ou data..." value="${esc(phSearchQuery)}" oninput="phSearchQuery=this.value;renderPromptHistory()">
-    <div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:11px;color:var(--muted);font-weight:700">${filtrado.length}/${ph.length} prompts · ${favs.length} favoritos</span>
-      <button class="btn btn-sec" style="padding:5px 10px;font-size:10px" onclick="limparPrompts()">🗑️ Limpar tudo</button>
+    <input class="ph-search" placeholder="🔍 Buscar texto ou #bom #ruim #usado #fav..." value="${esc(phSearchQuery)}" oninput="phSearchQuery=this.value;renderPromptHistory()">
+    <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-sec ${phFavsOnly?'active-filter':''}" style="padding:4px 9px;font-size:10px;font-weight:700" onclick="phFavsOnly=!phFavsOnly;renderPromptHistory()" title="Mostrar só favoritos">${phFavsOnly?'⭐ Só favoritos':'☆ Todos'}</button>
+      <button class="btn btn-sec" style="padding:4px 9px;font-size:10px" onclick="phSearchQuery='#bom';renderPromptHistory()" title="Filtrar resultado bom">👍</button>
+      <button class="btn btn-sec" style="padding:4px 9px;font-size:10px" onclick="phSearchQuery='#usado';renderPromptHistory()" title="Filtrar usados">✅</button>
+      <button class="btn btn-sec" style="padding:4px 9px;font-size:10px" onclick="phSearchQuery='';phFavsOnly=false;renderPromptHistory()" title="Limpar filtros">✕ Limpar</button>
+      <span style="font-size:10px;color:var(--muted);font-weight:700;margin-left:auto">${filtrado.length}/${ph.length} · ${favs.length} ⭐</span>
+      <button class="btn btn-sec" style="padding:4px 9px;font-size:10px" onclick="limparPrompts()">🗑️</button>
     </div>${emptyMsg}${items}`;
 }
 
@@ -1788,6 +1842,30 @@ function importarConfig(event){
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+
+// ═══════════════════════════════════
+// GERAÇÃO EM LOTE
+// ═══════════════════════════════════
+function gerarLote(n=5){
+  const adv = v('adv') || 'Adversário';
+  const data = v('data') || new Date().toLocaleDateString('pt-BR');
+  mostrarToast(`⚙️ Gerando ${n} variações...`, 'success');
+  const enc = new TextEncoder();
+  const prompts = [];
+  for(let i=1; i<=n; i++){
+    gerar(true); // gera variação aleatória, atualiza secaoContent
+    const txt = buildFullPrompt();
+    prompts.push({ name:`prompt-lote-${i}-${adv.replace(/\s+/g,'-')}.txt`, data: enc.encode(txt) });
+  }
+  const zipBytes = buildZip(prompts);
+  const blob = new Blob([zipBytes], {type:'application/zip'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `lote-prompts-${adv.replace(/\s+/g,'-')}-${Date.now()}.zip`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  mostrarToast(`📦 ${n} prompts exportados no ZIP!`, 'success');
 }
 
 // ═══════════════════════════════════

@@ -245,6 +245,18 @@ select option{background:#fff}
 .ph-search{width:100%;background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 11px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:500;outline:none;margin-bottom:10px;transition:border-color .2s}
 .ph-search:focus{border-color:var(--border2)}
 
+/* FILTRO FAVORITOS ATIVO */
+.active-filter{background:var(--gold)!important;color:#000!important;border-color:var(--gold)!important}
+
+/* PRÓXIMO JOGO HEADER */
+#proximoJogo{transition:opacity .3s}
+
+/* TAGS DE PROMPT */
+.ph-tag-btn{font-size:11px;border:1px solid var(--border);background:var(--surface2);border-radius:5px;padding:2px 7px;cursor:pointer;opacity:.5;transition:all .15s;color:var(--text)}
+.ph-tag-btn.active{opacity:1;border-color:var(--gold);background:rgba(212,175,55,.15)}
+.ph-tag-btn.tag-bom.active{border-color:#4caf50;background:rgba(76,175,80,.15)}
+.ph-tag-btn.tag-ruim.active{border-color:#e05252;background:rgba(224,82,82,.15)}
+
 /* TEMPLATES */
 #templateList .history-item{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:5px;background:var(--surface2);margin-bottom:4px;border:1px solid var(--border)}
 #templateList .del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;padding:0 3px;line-height:1}

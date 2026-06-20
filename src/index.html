@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prompt Master Prospere V6</title>
+<title>Prompt Master Futsal</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="manifest" href="manifest.json">
@@ -16,15 +16,16 @@
 <header>
   <div class="header-icon">⚽</div>
   <div>
-    <h1>Prompt Master Prospere</h1>
-    <p>Gerador profissional para campanhas do Kaio Genaro</p>
+    <h1>Prompt Master Futsal</h1>
+    <p id="headerSubtitle">Gerador de prompts para marketing esportivo</p>
   </div>
   <div class="header-right">
+    <span id="proximoJogo" style="display:none;align-items:center;gap:3px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:700;cursor:default" title="Próximo jogo cadastrado"></span>
     <div class="gen-counter">Geração #<span id="genNum">0</span></div>
     <button class="dark-toggle" id="dashboardBtn" onclick="abrirDashboard()" title="Ver estatísticas de uso" style="margin-right:-4px">📊</button>
     <button class="dark-toggle" id="langToggle" onclick="toggleIdioma()" title="Prompt em português — clique para inglês" style="margin-right:-4px">🇧🇷</button>
     <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Alternar dark mode">🌙</button>
-    <span class="badge">V6</span>
+    <span class="badge">V1</span>
   </div>
 </header>
 
@@ -46,7 +47,7 @@
       <div class="upload-box missing" id="box-logo1" onclick="document.getElementById('logo1').click()">
         <div class="upload-warn">!</div>
         <img id="prev-logo1" style="display:none">
-        <p id="txt-logo1">🛡️ Escudo<br>Prospere</p>
+        <p id="txt-logo1">🛡️ Escudo<br>do Clube</p>
         <input type="file" id="logo1" accept="image/*">
       </div>
       <div class="upload-box" id="box-logo2" onclick="document.getElementById('logo2').click()">
@@ -72,13 +73,13 @@
       <button class="btn btn-sec" style="padding:8px 10px;font-size:11px" onclick="deletarPerfil()" title="Deletar perfil selecionado">🗑️</button>
     </div>
     <div class="row2">
-      <div><label>Nome do atleta</label><input type="text" id="nome" value="Kaio Genaro"></div>
-      <div><label>Categoria</label><input type="text" id="categoria" value="Sub-8"></div>
+      <div><label>Nome do atleta</label><input type="text" id="nome" placeholder="Ex: João Silva"></div>
+      <div><label>Categoria</label><input type="text" id="categoria" placeholder="Ex: Sub-12"></div>
     </div>
     <label>Clube</label>
-    <input type="text" id="clube" value="Prospere Hortolândia Futsal">
+    <input type="text" id="clube" placeholder="Ex: Sorocaba Futsal">
     <label>Campeonato</label>
-    <input type="text" id="campeonato" value="Campeonato Paulista A1 de Futsal 2026">
+    <input type="text" id="campeonato" placeholder="Ex: Campeonato Paulista A2 de Futsal 2026">
     <div class="row2">
       <div>
         <label>Cor uniforme (principal)</label>
@@ -101,7 +102,7 @@
     <div id="posJogoFields" style="display:none;margin-bottom:8px">
       <label>Placar final</label>
       <div class="row2">
-        <div><label style="font-size:10px">Prospere</label><input type="number" id="golsNos" min="0" value="0" style="text-align:center"></div>
+        <div><label style="font-size:10px" id="labelGolsNos">Nós</label><input type="number" id="golsNos" min="0" value="0" style="text-align:center"></div>
         <div><label style="font-size:10px">Adversário</label><input type="number" id="golsAdv" min="0" value="0" style="text-align:center"></div>
       </div>
     </div>
@@ -298,6 +299,7 @@
     <button class="btn btn-sec" onclick="limparRascunho()" title="Limpar todos os campos">🧹 Limpar</button>
     <button class="btn btn-gold" onclick="exportarPDF()">📄 PDF</button>
     <button class="btn btn-gold" onclick="exportarKit()">📦 Kit</button>
+    <button class="btn btn-gold" onclick="gerarLote(5)" title="Gerar 5 variações e exportar como ZIP">📦 Semana</button>
 
     <div class="lock-panel" id="lockPanel">
       <div class="lock-panel-title">Travar categorias na Variação 🎲</div>
@@ -358,6 +360,35 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- MODAL ONBOARDING -->
+<div class="modal-overlay" id="modalOnboarding" style="z-index:9999">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header" style="border-bottom:2px solid var(--gold)">
+      <span class="modal-title">⚽ Bem-vindo ao Prompt Master Futsal!</span>
+    </div>
+    <div class="modal-body" style="display:block;padding:24px 20px 8px">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.6">Configure os dados do seu clube e atleta para personalizar todos os prompts gerados.</p>
+      <label>Nome do atleta <span style="color:var(--red)">*</span></label>
+      <input type="text" id="ob-nome" placeholder="Ex: João Silva" autofocus>
+      <div class="row2" style="margin-top:10px">
+        <div><label>Categoria</label><input type="text" id="ob-categoria" placeholder="Ex: Sub-12"></div>
+        <div><label>Posição</label><input type="text" id="ob-posicao" placeholder="Ex: Fixo"></div>
+      </div>
+      <label style="margin-top:10px">Clube <span style="color:var(--red)">*</span></label>
+      <input type="text" id="ob-clube" placeholder="Ex: Sorocaba Futsal">
+      <label style="margin-top:10px">Campeonato</label>
+      <input type="text" id="ob-campeonato" placeholder="Ex: Campeonato Paulista A2 2026">
+      <div class="row2" style="margin-top:10px">
+        <div><label>Cor principal</label><input type="text" id="ob-cor1" placeholder="Ex: azul royal"></div>
+        <div><label>Cor detalhe</label><input type="text" id="ob-cor2" placeholder="Ex: branco"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" style="width:100%;font-size:14px" onclick="finalizarOnboarding()">🚀 Começar a gerar prompts</button>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
