@@ -5,7 +5,20 @@ let genCount = 0;
 let intensidade = 'Confronto';
 let fraseSelecionada = '🎲 IA cria frase inédita automaticamente';
 let currentTab = 'secoes';
-let promptAnterior = '';  // para comparação de gerações
+let promptAnterior = '';
+let idioma = 'pt';
+const generationStack = [];
+
+function tx(pt, en){ return idioma === 'en' ? en : pt; }
+
+function toggleIdioma(){
+  idioma = idioma === 'pt' ? 'en' : 'pt';
+  const btn = document.getElementById('langToggle');
+  btn.textContent = idioma === 'en' ? '🇺🇸' : '🇧🇷';
+  btn.title = idioma === 'en' ? 'Prompt em inglês — clique para português' : 'Prompt em português — clique para inglês';
+  localStorage.setItem('prospere_idioma', idioma);
+  mostrarToast(idioma === 'en' ? '🇺🇸 Prompt will be generated in English' : '🇧🇷 Prompt será gerado em português', 'success');
+}
 
 const intensidadeMap = {
   Celebracao: {
@@ -25,6 +38,25 @@ const intensidadeMap = {
     cenario:'ginásio profissional moderno, atmosfera clean e premium, identidade visual do clube',
     expressao:'postura confiante e profissional, representando o clube com orgulho',
     slogan:'tom institucional e de orgulho do clube, frases inspiradoras e elegantes'
+  },
+  // modos pós-jogo
+  PosVitoria: {
+    desc:'Arte de pós-jogo — VITÓRIA: explosão de alegria, conquista épica, celebração máxima.',
+    cenario:'vestiário em festa, confetes dourados, torcida em êxtase, luzes de celebração',
+    expressao:'grito de vitória, punho erguido, sorriso de campeão, emoção pura',
+    slogan:'tom de conquista e triunfo — "Vencemos!", frases épicas de vitória'
+  },
+  PosEmpate: {
+    desc:'Arte de pós-jogo — EMPATE: determinação, resiliência e cabeça erguida.',
+    cenario:'ginásio ao fim do jogo, clima de respeito mútuo, equipe unida',
+    expressao:'cabeça erguida, determinado, resiliente, olhar de quem segue em frente',
+    slogan:'tom de determinação e continuidade — "A luta continua", superação'
+  },
+  PosDerrota: {
+    desc:'Arte de pós-jogo — DERROTA: garra, superação e foco no próximo desafio.',
+    cenario:'ginásio silencioso, luzes frias, clima de reflexão e determinação para o futuro',
+    expressao:'olhar resoluto, determinação silenciosa, garra de quem já quer a revanche',
+    slogan:'tom de superação e revanche — "Voltaremos mais fortes", resiliência'
   }
 };
 
@@ -154,6 +186,14 @@ function setIntensidade(btn){
 }
 // init
 document.querySelectorAll('.int-btn').forEach(b => { if(b.dataset.val === 'Confronto') b.classList.add('active-confronto'); });
+
+function setModoJogo(btn){
+  document.querySelectorAll('#modoGroup .toggle').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const isPosJogo = btn.dataset.val === 'postgame';
+  const fields = document.getElementById('posJogoFields');
+  if(fields) fields.style.display = isPosJogo ? 'block' : 'none';
+}
 
 // ═══════════════════════════════════
 // FRASES
@@ -294,12 +334,15 @@ document.addEventListener('click', e => {
 });
 
 function gerar(aleatorio){
-  // VALIDAÇÃO: avisa sobre campos importantes faltando, mas não bloqueia a geração
+  // salva estado atual na pilha de desfazer antes de sobrescrever
+  if(Object.keys(secaoContent).length){
+    generationStack.push(JSON.parse(JSON.stringify(secaoContent)));
+    if(generationStack.length > 15) generationStack.shift();
+  }
+
   if(!aleatorio){
     const problemas = validarCampos();
-    if(problemas.length){
-      mostrarToast('⚠️ Faltando: ' + problemas.join(', '), 'warn');
-    }
+    if(problemas.length) mostrarToast('⚠️ Faltando: ' + problemas.join(', '), 'warn');
   }
 
   const nome = v('nome') || 'Kaio Genaro';
@@ -313,12 +356,25 @@ function gerar(aleatorio){
   const local = v('local') || '[LOCAL]';
   const u1 = v('uniforme1');
   const u2 = v('uniforme2');
-  const uniformeDesc = (u1||u2) ? `${u1||''}${u2?' e '+u2:''}` : 'conforme uniforme oficial do clube';
+  const uniformeDesc = (u1||u2) ? `${u1||''}${u2?' e '+u2:''}` : tx('conforme uniforme oficial do clube','as per the official club uniform');
+
+  // modo pós-jogo
+  const modoEl = document.getElementById('modoGroup');
+  const modoAtivo = modoEl ? (modoEl.querySelector('.toggle.active')?.dataset.val || 'pregame') : 'pregame';
+  const isPosJogo = modoAtivo === 'postgame';
+  const golsNos = parseInt(v('golsNos') || '0') || 0;
+  const golsAdv = parseInt(v('golsAdv') || '0') || 0;
+  const placar = isPosJogo ? `${golsNos} × ${golsAdv}` : null;
+  const resultado = isPosJogo
+    ? (golsNos > golsAdv ? 'vitoria' : golsNos < golsAdv ? 'derrota' : 'empate')
+    : null;
 
   const tipo = getToggle('tipoGroup');
   const ferramenta = getToggle('ferramentaGroup');
   const fraseCustom = v('fraseCustom');
-  const frase = fraseCustom || (fraseSelecionada.startsWith('🎲') ? 'IA cria frase inédita e inspiradora, nunca antes usada' : fraseSelecionada);
+  const frase = fraseCustom || (fraseSelecionada.startsWith('🎲')
+    ? tx('IA cria frase inédita e inspiradora, nunca antes usada','AI creates a unique and inspiring phrase, never used before')
+    : fraseSelecionada);
 
   // Aspect ratio por tipo de arte, em formato neutro (usado para adaptar à sintaxe de cada ferramenta)
   const aspectRatioMap = {
@@ -357,7 +413,11 @@ function gerar(aleatorio){
     setToggle('anguloGroup', angulo);
   }
 
-  const int = intensidadeMap[intensidade];
+  // intensidade efetiva: pós-jogo sobrepõe a intensidade manual
+  const intensidadeEfetiva = isPosJogo
+    ? (resultado === 'vitoria' ? 'PosVitoria' : resultado === 'derrota' ? 'PosDerrota' : 'PosEmpate')
+    : intensidade;
+  const int = intensidadeMap[intensidadeEfetiva];
   genCount++;
   document.getElementById('genNum').textContent = genCount;
 
@@ -365,47 +425,39 @@ function gerar(aleatorio){
   const hasLogo1 = document.getElementById('box-logo1').classList.contains('has-img');
   const hasLogo2 = document.getElementById('box-logo2').classList.contains('has-img');
 
-  const fotoWarn = !hasFoto ? '\n⚠️ ATENÇÃO: FOTO DO ATLETA NÃO ENVIADA — aguarde o envio para gerar a arte\n' : '';
-  const logo1Warn = !hasLogo1 ? '\n⚠️ ATENÇÃO: ESCUDO PROSPERE NÃO ENVIADO\n' : '';
-  const logo2Warn = !hasLogo2 ? '\n⚠️ ATENÇÃO: ESCUDO DO ADVERSÁRIO NÃO ENVIADO — integre o escudo de ' + adv.toUpperCase() + ' quando disponível\n' : '';
+  const fotoWarn = !hasFoto ? `\n${tx('⚠️ ATENÇÃO: FOTO DO ATLETA NÃO ENVIADA','⚠️ WARNING: ATHLETE PHOTO NOT UPLOADED')}\n` : '';
+  const logo1Warn = !hasLogo1 ? `\n${tx('⚠️ ATENÇÃO: ESCUDO PROSPERE NÃO ENVIADO','⚠️ WARNING: PROSPERE BADGE NOT UPLOADED')}\n` : '';
+  const logo2Warn = !hasLogo2 ? `\n${tx('⚠️ ATENÇÃO: ESCUDO DO ADVERSÁRIO NÃO ENVIADO — integre o escudo de ','⚠️ WARNING: OPPONENT BADGE NOT UPLOADED — add the badge of ')}${adv.toUpperCase()}${tx(' quando disponível','')} \n` : '';
 
-  // ── BLOCOS BASE (comuns a todos os tipos) ──────────────────────────
-  const base_identidade = `IDENTIDADE FIXA\n${'─'.repeat(40)}\n\nAtleta: ${nome.toUpperCase()}\nClube: ${clube.toUpperCase()}\nCampeonato: ${campeonato.toUpperCase()}\nCategoria: ${categoria.toUpperCase()}\n\nO nome ${nome.toUpperCase()} deve ser um dos elementos MAIS DESTACADOS da arte.\nUsar fonte gigante, metal dourado premium, gold chrome, reflexos metálicos, visual luxuoso.`;
+  const placarBloco = isPosJogo && placar
+    ? `\n${tx('RESULTADO FINAL','FINAL SCORE')}: ${clube.toUpperCase()} ${placar} ${adv.toUpperCase()}\n${tx('Resultado','Result')}: ${resultado === 'vitoria' ? tx('VITÓRIA 🏆','VICTORY 🏆') : resultado === 'derrota' ? tx('DERROTA — resiliência e superação','DEFEAT — resilience and growth') : tx('EMPATE — cabeça erguida','DRAW — heads up')}\n`
+    : '';
 
-  const base_fidelidade = `FIDELIDADE FACIAL MÁXIMA (OBRIGATÓRIO)${fotoWarn}\n${'─'.repeat(40)}\n\nUTILIZAR A FOTO ENVIADA COMO REFERÊNCIA PRINCIPAL DO ATLETA.\nPreservar identidade facial com máxima fidelidade possível.\n\nMANTER EXATAMENTE:\n• formato do rosto • cabelo e linha do cabelo\n• sobrancelhas • olhos • nariz e boca • sorriso\n• tom de pele • idade aparente\n• proporções e características físicas reais • expressão natural\n\nNÃO:\n• estilizar • cartoonizar • transformar em personagem digital\n• criar rosto genérico • aplicar filtros artificiais\n\nO atleta final deve ser imediatamente reconhecível como a criança da foto enviada.`;
+  // ── BLOCOS BASE ──────────────────────────────────────────────────────
+  const base_identidade = `${tx('IDENTIDADE FIXA','FIXED IDENTITY')}\n${'─'.repeat(40)}\n\n${tx('Atleta','Athlete')}: ${nome.toUpperCase()}\n${tx('Clube','Club')}: ${clube.toUpperCase()}\n${tx('Campeonato','Championship')}: ${campeonato.toUpperCase()}\n${tx('Categoria','Category')}: ${categoria.toUpperCase()}${placarBloco}\n\n${tx(`O nome ${nome.toUpperCase()} deve ser um dos elementos MAIS DESTACADOS da arte.\nUsar fonte gigante, metal dourado premium, gold chrome, reflexos metálicos, visual luxuoso.`,`The name ${nome.toUpperCase()} must be one of the MOST HIGHLIGHTED elements of the art.\nUse giant display font, premium gold metal, gold chrome, metallic reflections, luxurious visual.`)}`;
 
-  const base_uniforme = `UNIFORME DO ATLETA${logo1Warn}\n${'─'.repeat(40)}\n\nVestir o atleta com o uniforme oficial: ${uniformeDesc}.\n${hasLogo1 ? 'Usar o escudo enviado como referência para a identidade visual do uniforme.' : 'ATENÇÃO: escudo Prospere não enviado — usar identidade visual baseada nas cores informadas.'}\nManter uniformidade com a identidade visual do ${clube}.`;
+  const base_fidelidade = `${tx('FIDELIDADE FACIAL MÁXIMA (OBRIGATÓRIO)','MAXIMUM FACIAL FIDELITY (MANDATORY)')}${fotoWarn}\n${'─'.repeat(40)}\n\n${tx('UTILIZAR A FOTO ENVIADA COMO REFERÊNCIA PRINCIPAL DO ATLETA.\nPreservar identidade facial com máxima fidelidade possível.','USE THE UPLOADED PHOTO AS THE MAIN REFERENCE FOR THE ATHLETE.\nPreserve facial identity with maximum possible fidelity.')}\n\n${tx('MANTER EXATAMENTE:','KEEP EXACTLY:')}\n${tx('• formato do rosto • cabelo e linha do cabelo\n• sobrancelhas • olhos • nariz e boca • sorriso\n• tom de pele • idade aparente\n• proporções e características físicas reais • expressão natural','• face shape • hair and hairline\n• eyebrows • eyes • nose and mouth • smile\n• skin tone • apparent age\n• real physical proportions and features • natural expression')}\n\n${tx('NÃO:','DO NOT:')}\n${tx('• estilizar • cartoonizar • transformar em personagem digital\n• criar rosto genérico • aplicar filtros artificiais\n\nO atleta final deve ser imediatamente reconhecível como a criança da foto enviada.','• stylize • cartoonize • transform into a digital character\n• create a generic face • apply artificial filters\n\nThe final athlete must be immediately recognizable as the child from the uploaded photo.')}`;
 
-  const base_paleta = `PALETA DE CORES\n${'─'.repeat(40)}\n\nPaleta escolhida: ${paleta}\n\nOpções aceitas:\n• azul e dourado • azul e prata • preto e dourado\n• grafite e prata • vermelho e preto • azul royal e branco\n• roxo neon • verde esmeralda premium\n• combinações cinematográficas exclusivas`;
+  const base_uniforme = `${tx('UNIFORME DO ATLETA','ATHLETE UNIFORM')}${logo1Warn}\n${'─'.repeat(40)}\n\n${tx('Vestir o atleta com o uniforme oficial:','Dress the athlete in the official uniform:')} ${uniformeDesc}.\n${hasLogo1 ? tx('Usar o escudo enviado como referência para a identidade visual do uniforme.','Use the uploaded badge as reference for the uniform visual identity.') : tx('ATENÇÃO: escudo Prospere não enviado — usar identidade visual baseada nas cores informadas.','WARNING: Prospere badge not uploaded — use visual identity based on the informed colors.')}\n${tx('Manter uniformidade com a identidade visual do','Maintain consistency with the visual identity of')} ${clube}.`;
 
-  const base_frase = `FRASE DE IMPACTO\n${'─'.repeat(40)}\n\n"${frase}"\n\nSempre criar frase inédita. Nunca repetir frases anteriores.\nRelacionada a: sonho • talento • futuro • determinação • evolução • paixão pelo futsal`;
+  const base_paleta = `${tx('PALETA DE CORES','COLOR PALETTE')}\n${'─'.repeat(40)}\n\n${tx('Paleta escolhida','Chosen palette')}: ${paleta}\n\n${tx('Opções aceitas:\n• azul e dourado • azul e prata • preto e dourado\n• grafite e prata • vermelho e preto • azul royal e branco\n• roxo neon • verde esmeralda premium\n• combinações cinematográficas exclusivas','Accepted options:\n• blue and gold • blue and silver • black and gold\n• graphite and silver • red and black • royal blue and white\n• neon purple • premium emerald green\n• exclusive cinematic combinations')}`;
 
-  // Cenário efetivo: combina o cenário do modo de intensidade com a variação sorteada (se houver)
+  const base_frase = `${tx('FRASE DE IMPACTO','IMPACT PHRASE')}\n${'─'.repeat(40)}\n\n"${frase}"\n\n${tx('Sempre criar frase inédita. Nunca repetir frases anteriores.\nRelacionada a: sonho • talento • futuro • determinação • evolução • paixão pelo futsal','Always create a unique phrase. Never repeat previous phrases.\nRelated to: dream • talent • future • determination • evolution • passion for futsal')}`;
+
   const cenarioEfetivo = aleatorio ? `${int.cenario}. ${cenarioVar}` : int.cenario;
   const iluminacaoEfetiva = aleatorio ? iluminacaoVar : null;
   const layoutEfetivo = aleatorio ? layoutVar : null;
   const tipografiaEfetiva = aleatorio ? tipografiaVar : null;
 
-  // Bloco de variação extra — só aparece quando "🎲 Variação" é usado.
-  // Reforça que identidade, rosto e uniforme NUNCA mudam, mesmo variando tudo o resto.
-  const blocoVariacaoExtra = aleatorio ? `\n\nVARIAÇÃO DE COMPOSIÇÃO (GERAÇÃO #${genCount}):\n• Layout: ${layoutEfetivo}\n${iluminacaoEfetiva ? '• Iluminação: ' + iluminacaoEfetiva + '\n' : ''}${tipografiaEfetiva ? '• Estilo de tipografia: ' + tipografiaEfetiva + '\n' : ''}\nIMPORTANTE: variar livremente composição, layout, iluminação e tipografia.\nNÃO alterar identidade do atleta, rosto, escudos ou uniforme — esses permanecem fixos.` : '';
+  const blocoVariacaoExtra = aleatorio ? `\n\n${tx('VARIAÇÃO DE COMPOSIÇÃO','COMPOSITION VARIATION')} (${tx('GERAÇÃO','GENERATION')} #${genCount}):\n• ${tx('Layout','Layout')}: ${layoutEfetivo}\n${iluminacaoEfetiva ? `• ${tx('Iluminação','Lighting')}: ${iluminacaoEfetiva}\n` : ''}${tipografiaEfetiva ? `• ${tx('Estilo de tipografia','Typography style')}: ${tipografiaEfetiva}\n` : ''}\n${tx('IMPORTANTE: variar livremente composição, layout, iluminação e tipografia.\nNÃO alterar identidade do atleta, rosto, escudos ou uniforme — esses permanecem fixos.','IMPORTANT: freely vary composition, layout, lighting and typography.\nDO NOT change athlete identity, face, badges or uniform — these remain fixed.')}` : '';
 
-  // Negative prompt — lista do que evitar, adaptada à sintaxe da ferramenta escolhida
-  const itensEvitar = [
-    'rosto distorcido ou deformado',
-    'estilização tipo desenho/cartoon do atleta',
-    'rosto genérico que não corresponda à foto enviada',
-    'mãos ou dedos malformados',
-    'texto ilegível, embaralhado ou com erros de ortografia',
-    'marcas, logos ou patrocinadores de terceiros não solicitados',
-    'membros extras ou anatomia incorreta',
-    'baixa resolução, blur excessivo, ruído digital',
-    'watermark ou assinatura visível',
-    'proporções de corpo infantil incorretas para a idade informada'
-  ];
+  const itensEvitar = tx(
+    ['rosto distorcido ou deformado','estilização tipo desenho/cartoon do atleta','rosto genérico que não corresponda à foto enviada','mãos ou dedos malformados','texto ilegível, embaralhado ou com erros de ortografia','marcas, logos ou patrocinadores de terceiros não solicitados','membros extras ou anatomia incorreta','baixa resolução, blur excessivo, ruído digital','watermark ou assinatura visível','proporções de corpo infantil incorretas para a idade informada'],
+    ['distorted or deformed face','cartoon/drawing stylization of the athlete','generic face that does not match the uploaded photo','malformed hands or fingers','illegible, scrambled text or spelling errors','third-party brands, logos or sponsors not requested','extra limbs or incorrect anatomy','low resolution, excessive blur, digital noise','visible watermark or signature','incorrect child body proportions for the stated age']
+  );
   const base_negativo = ferramenta === 'Midjourney'
-    ? `EVITAR (NEGATIVE PROMPT)\n${'─'.repeat(40)}\n\nUsar como parâmetro --no no Midjourney:\n--no ${itensEvitar.join(', ')}\n\nReforço textual: a arte NÃO deve conter nenhum dos itens acima.`
-    : `EVITAR (NEGATIVE PROMPT)\n${'─'.repeat(40)}\n\nA arte NÃO deve conter:\n${itensEvitar.map(i => '• ' + i).join('\n')}\n\nPriorize sempre a fidelidade facial real do atleta sobre qualquer estilização.`;
+    ? `${tx('EVITAR (NEGATIVE PROMPT)','AVOID (NEGATIVE PROMPT)')}\n${'─'.repeat(40)}\n\n${tx('Usar como parâmetro --no no Midjourney:','Use as --no parameter in Midjourney:')}\n--no ${itensEvitar.join(', ')}\n\n${tx('Reforço textual: a arte NÃO deve conter nenhum dos itens acima.','Text reinforcement: the art must NOT contain any of the items above.')}`
+    : `${tx('EVITAR (NEGATIVE PROMPT)','AVOID (NEGATIVE PROMPT)')}\n${'─'.repeat(40)}\n\n${tx('A arte NÃO deve conter:','The art must NOT contain:')}\n${itensEvitar.map(i => '• ' + i).join('\n')}\n\n${tx('Priorize sempre a fidelidade facial real do atleta sobre qualquer estilização.','Always prioritize real facial fidelity of the athlete over any stylization.')}`;
 
   // ── TEMPLATES POR TIPO ─────────────────────────────────────────────
   let secs = {};
@@ -585,8 +637,12 @@ function copiarFallback(val, msgCopiado, temFoto){
 function salvarPartida(){
   const adv = v('adv');
   if(!adv){ mostrarToast('⚠️ Preencha o adversário!','warn'); return; }
+  const modoEl = document.getElementById('modoGroup');
+  const modoAtivo = modoEl ? (modoEl.querySelector('.toggle.active')?.dataset.val || 'pregame') : 'pregame';
+  const golsNos = v('golsNos'); const golsAdv = v('golsAdv');
+  const placar = (modoAtivo === 'postgame' && golsNos !== '' && golsAdv !== '') ? `${golsNos}×${golsAdv}` : null;
   let h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
-  h.unshift({ adv, data:v('data'), hora:v('hora'), local:v('local'), ts:Date.now() });
+  h.unshift({ adv, data:v('data'), hora:v('hora'), local:v('local'), placar, ts:Date.now() });
   if(h.length>30) h=h.slice(0,30);
   localStorage.setItem('prospere_partidas', JSON.stringify(h));
 
@@ -604,16 +660,33 @@ function salvarPartida(){
   mostrarToast('💾 Partida e prompt salvos!','success');
 }
 
+function diasRestantes(dataStr){
+  if(!dataStr) return null;
+  const parts = dataStr.split('/');
+  if(parts.length < 3) return null;
+  const gameDate = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+  const hoje = new Date(); hoje.setHours(0,0,0,0); gameDate.setHours(0,0,0,0);
+  const diff = Math.round((gameDate - hoje) / 86400000);
+  if(diff < 0) return null;
+  if(diff === 0) return '<span style="color:var(--red);font-weight:700">🔴 Hoje!</span>';
+  if(diff === 1) return '<span style="color:var(--orange);font-weight:700">🟡 Amanhã!</span>';
+  if(diff <= 7) return `<span style="color:var(--orange);font-weight:700">🟡 ${diff}d</span>`;
+  return `<span style="color:var(--green);font-weight:700">🟢 ${diff}d</span>`;
+}
+
 function renderHistory(){
   const h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
   const el = document.getElementById('historyList');
   if(!h.length){ el.innerHTML='<p style="font-size:12px;color:var(--muted)">Nenhuma partida salva ainda.</p>'; return; }
-  el.innerHTML = h.map(item => `
-    <div class="history-item">
-      <span onclick="carregarPartida(${item.ts})" style="flex:1;cursor:pointer">⚽ ${esc(item.adv)}</span>
-      <span style="font-size:10px;color:var(--muted)">${esc(item.data||'')}</span>
+  el.innerHTML = h.map(item => {
+    const countdown = diasRestantes(item.data);
+    const placarBadge = item.placar ? `<span style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:'JetBrains Mono',monospace">${esc(item.placar)}</span>` : '';
+    return `<div class="history-item">
+      <span onclick="carregarPartida(${item.ts})" style="flex:1;cursor:pointer">⚽ ${esc(item.adv)} ${placarBadge}</span>
+      <span style="font-size:10px;color:var(--muted)">${countdown ? countdown + ' · ' : ''}${esc(item.data||'')}</span>
       <button class="del" onclick="deletarPartida(${item.ts})">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function carregarPartida(ts){
@@ -636,10 +709,13 @@ function deletarPartida(ts){
 // ═══════════════════════════════════
 // HISTORICO DE PROMPTS
 // ═══════════════════════════════════
+let phSearchQuery = '';
+
 function renderPromptHistory(){
   const ph = JSON.parse(localStorage.getItem('prospere_prompts') || '[]');
   const favs = JSON.parse(localStorage.getItem('prospere_favs') || '[]');
   const tags = JSON.parse(localStorage.getItem('prospere_tags') || '{}');
+  const resultados = JSON.parse(localStorage.getItem('prospere_resultados') || '{}');
   const container = document.getElementById('tab-phistory');
 
   if(!ph.length){
@@ -647,8 +723,13 @@ function renderPromptHistory(){
     return;
   }
 
+  const q = phSearchQuery.toLowerCase().trim();
+  const filtrado = q
+    ? ph.filter(p => (p.adv||'').toLowerCase().includes(q) || (p.data||'').includes(q))
+    : ph;
+
   // favoritos primeiro
-  const sorted = [...ph].sort((a,b) => {
+  const sorted = [...filtrado].sort((a,b) => {
     const fa = favs.includes(a.ts), fb = favs.includes(b.ts);
     if(fa && !fb) return -1; if(!fa && fb) return 1; return b.ts - a.ts;
   });
@@ -665,11 +746,16 @@ function renderPromptHistory(){
     const isFav = favs.includes(item.ts);
     const favBadge = isFav ? '<span class="ph-fav-badge">⭐ Favorito</span>' : '';
     const itemTags = tags[item.ts] || [];
+    const imgB64 = resultados[item.ts];
 
     const tagButtons = Object.keys(TAG_DEFS).map(key => {
       const ativo = itemTags.includes(key);
       return `<button class="ph-tag-btn ${ativo?'active tag-'+key:''}" onclick="event.stopPropagation();toggleTag(${item.ts},'${key}')" title="${TAG_DEFS[key].label}">${TAG_DEFS[key].icon}</button>`;
     }).join('');
+
+    const resultBlock = imgB64
+      ? `<div class="ph-result"><img class="ph-result-img" src="${imgB64}" onclick="event.stopPropagation();verResultado('${item.ts}')" title="Clique para ampliar"><button class="ph-result-btn" onclick="event.stopPropagation();removerResultado(${item.ts})">🗑️ Remover foto</button></div>`
+      : `<div class="ph-result"><button class="ph-result-btn" onclick="event.stopPropagation();document.getElementById('resultInput-${item.ts}').click()">📸 Adicionar resultado</button><input type="file" id="resultInput-${item.ts}" accept="image/*" style="display:none" onchange="uploadResultado(event,${item.ts})"></div>`;
 
     return `<div class="phist-item" onclick="carregarPrompt(${item.ts})">
       <button class="phist-fav ${isFav?'fav':''}" onclick="event.stopPropagation();toggleFav(${item.ts})" title="${isFav?'Remover favorito':'Adicionar favorito'}">${isFav?'⭐':'☆'}</button>
@@ -679,13 +765,64 @@ function renderPromptHistory(){
       </div>
       <div class="ph-preview">${preview}...</div>
       <div class="ph-tags">${tagButtons}</div>
+      ${resultBlock}
     </div>`;
   }).join('');
 
-  container.innerHTML = `<div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
-    <span style="font-size:11px;color:var(--muted);font-weight:700">${ph.length} prompts · ${favs.length} favoritos</span>
-    <button class="btn btn-sec" style="padding:5px 10px;font-size:10px" onclick="limparPrompts()">🗑️ Limpar tudo</button>
-  </div>${items}`;
+  const emptyMsg = q && !sorted.length ? `<div class="ph-empty">Nenhum resultado para "<strong>${esc(q)}</strong>"</div>` : '';
+
+  container.innerHTML = `
+    <input class="ph-search" placeholder="🔍 Buscar por adversário ou data..." value="${esc(phSearchQuery)}" oninput="phSearchQuery=this.value;renderPromptHistory()">
+    <div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:11px;color:var(--muted);font-weight:700">${filtrado.length}/${ph.length} prompts · ${favs.length} favoritos</span>
+      <button class="btn btn-sec" style="padding:5px 10px;font-size:10px" onclick="limparPrompts()">🗑️ Limpar tudo</button>
+    </div>${emptyMsg}${items}`;
+}
+
+// ─── Galeria de resultados ───
+async function uploadResultado(event, ts){
+  const file = event.target.files[0]; if(!file) return;
+  const b64 = await comprimirImagem(file, 600);
+  try {
+    const resultados = JSON.parse(localStorage.getItem('prospere_resultados') || '{}');
+    resultados[ts] = b64;
+    localStorage.setItem('prospere_resultados', JSON.stringify(resultados));
+    renderPromptHistory();
+    mostrarToast('📸 Foto do resultado salva!','success');
+  } catch(e){
+    mostrarToast('⚠️ Imagem muito grande para salvar','warn');
+  }
+}
+
+function removerResultado(ts){
+  const resultados = JSON.parse(localStorage.getItem('prospere_resultados') || '{}');
+  delete resultados[ts];
+  localStorage.setItem('prospere_resultados', JSON.stringify(resultados));
+  renderPromptHistory();
+}
+
+function verResultado(ts){
+  const resultados = JSON.parse(localStorage.getItem('prospere_resultados') || '{}');
+  const src = resultados[ts]; if(!src) return;
+  const w = window.open('','_blank');
+  w.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${src}" style="max-width:100%;max-height:100vh;object-fit:contain"></body></html>`);
+  w.document.close();
+}
+
+function comprimirImagem(file, maxSize=600){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = Math.min(maxSize/img.width, maxSize/img.height, 1);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.75));
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 function toggleTag(ts, tagKey){
@@ -846,9 +983,26 @@ function toggleDark(){
 function abrirComparacao(){
   const atual = buildFullPrompt();
   if(!atual.trim()){ mostrarToast('⚠️ Gere um prompt primeiro!','warn'); return; }
+  document.querySelector('#modalComparacao .modal-title').textContent = '⇄ Comparar Gerações';
+  document.querySelectorAll('.modal-col-header')[0].textContent = 'Geração Anterior';
+  document.querySelectorAll('.modal-col-header')[1].textContent = 'Geração Atual';
   document.getElementById('compareLeft').value  = promptAnterior || '(Nenhuma geração anterior nesta sessão)';
   document.getElementById('compareRight').value = atual;
   document.getElementById('modalComparacao').classList.add('open');
+}
+
+function gerarAB(){
+  gerar(true);
+  const varA = buildFullPrompt();
+  gerar(true);
+  const varB = buildFullPrompt();
+  document.querySelector('#modalComparacao .modal-title').textContent = '⊞ Variações A/B';
+  document.querySelectorAll('.modal-col-header')[0].textContent = 'Variação A';
+  document.querySelectorAll('.modal-col-header')[1].textContent = 'Variação B';
+  document.getElementById('compareLeft').value  = varA;
+  document.getElementById('compareRight').value = varB;
+  document.getElementById('modalComparacao').classList.add('open');
+  mostrarToast('⊞ Duas variações geradas!','success');
 }
 function fecharComparacao(){
   document.getElementById('modalComparacao').classList.remove('open');
@@ -917,7 +1071,8 @@ document.addEventListener('keydown', e => {
   }
   else if(e.key === 's'){ e.preventDefault(); salvarPartida(); }
   else if(e.key === 'c' && !isEditable){ e.preventDefault(); copiar(); }
-  // Ctrl+C dentro de input/textarea segue o comportamento nativo do navegador (copiar seleção)
+  else if(e.key === 'z' && !isEditable){ e.preventDefault(); undoGeneration(); }
+  else if(e.key === 'l' && !isEditable){ e.preventDefault(); toggleIdioma(); }
 });
 
 // ═══════════════════════════════════
@@ -945,10 +1100,22 @@ function registrarAdversario(nomeAdv){
     atualizarAdvList();
   }
 }
+const TIMES_PAULISTAS = [
+  'Magnus Futsal','Sorocaba Futsal','ACBF','Cascavel Futsal','Joinville EC',
+  'Carlos Barbosa','Blumenau Futsal','Corinthians Futsal','Pato Futsal',
+  'Foz Cataratas','São Paulo FC Futsal','Santos Futsal','Taubaté Futsal',
+  'Guarulhos Futsal','São José Futsal','Mogi das Cruzes Futsal',
+  'Campinas Futsal','Ribeirão Preto Futsal','Bauru Futsal','Franca Futsal',
+  'Araraquara Futsal','Marília Futsal','Presidente Prudente Futsal',
+  'São Bernardo Futsal','Santo André Futsal','Osasco Futsal',
+  'Indaiatuba Futsal','Jundiaí Futsal','Hortolândia Futsal'
+];
+
 function atualizarAdvList(){
   const lista = JSON.parse(localStorage.getItem('prospere_advs') || '[]');
+  const todos = [...new Set([...TIMES_PAULISTAS, ...lista])].sort((a,b) => a.localeCompare(b,'pt'));
   const dl = document.getElementById('advList');
-  dl.innerHTML = lista.map(a => `<option value="${esc(a)}">`).join('');
+  dl.innerHTML = todos.map(a => `<option value="${esc(a)}">`).join('');
 }
 
 // ═══════════════════════════════════
@@ -996,6 +1163,165 @@ function importarConfig(event){
   reader.readAsText(file);
   event.target.value = '';
 }
+
+// ═══════════════════════════════════
+// DESFAZER GERAÇÃO
+// ═══════════════════════════════════
+function undoGeneration(){
+  if(generationStack.length < 2){ mostrarToast('⚠️ Nada para desfazer','warn'); return; }
+  generationStack.pop(); // descarta estado atual
+  const prev = generationStack[generationStack.length - 1];
+  buildSections(prev);
+  syncRaw();
+  mostrarToast('↩️ Geração desfeita (Ctrl+Z)','success');
+}
+
+// ═══════════════════════════════════
+// TEMPLATES DE PROMPT
+// ═══════════════════════════════════
+function renderTemplateList(){
+  const templates = JSON.parse(localStorage.getItem('prospere_templates') || '[]');
+  const el = document.getElementById('templateList');
+  if(!templates.length){ el.innerHTML='<p style="font-size:12px;color:var(--muted)">Nenhum template salvo.</p>'; return; }
+  el.innerHTML = templates.map((t,i) => `
+    <div class="history-item">
+      <span onclick="carregarTemplate(${i})" style="flex:1;cursor:pointer" title="${esc(t.nome)}">📋 ${esc(t.nome)}</span>
+      <button class="del" onclick="deletarTemplate(${i})">✕</button>
+    </div>`).join('');
+}
+
+function salvarTemplate(){
+  const nome = v('templateNome');
+  if(!nome){ mostrarToast('⚠️ Digite um nome para o template','warn'); return; }
+  if(!Object.keys(secaoContent).length){ mostrarToast('⚠️ Gere um prompt primeiro!','warn'); return; }
+  const templates = JSON.parse(localStorage.getItem('prospere_templates') || '[]');
+  templates.unshift({ nome, secoes:{...secaoContent}, ts:Date.now() });
+  if(templates.length > 30) templates.length = 30;
+  localStorage.setItem('prospere_templates', JSON.stringify(templates));
+  document.getElementById('templateNome').value = '';
+  renderTemplateList();
+  mostrarToast('💾 Template salvo!','success');
+}
+
+function carregarTemplate(i){
+  const templates = JSON.parse(localStorage.getItem('prospere_templates') || '[]');
+  const t = templates[i]; if(!t) return;
+  buildSections(t.secoes);
+  syncRaw();
+  mostrarToast('📋 Template carregado!','success');
+}
+
+function deletarTemplate(i){
+  let templates = JSON.parse(localStorage.getItem('prospere_templates') || '[]');
+  templates.splice(i,1);
+  localStorage.setItem('prospere_templates', JSON.stringify(templates));
+  renderTemplateList();
+  mostrarToast('🗑️ Template deletado','');
+}
+
+// ═══════════════════════════════════
+// NOTIFICAÇÃO PRÉ-JOGO
+// ═══════════════════════════════════
+async function agendarNotificacao(){
+  const data = v('data'); const hora = v('hora'); const adv = v('adv');
+  if(!data || !hora){ mostrarToast('⚠️ Preencha data e horário da partida','warn'); return; }
+  if(!('Notification' in window)){ mostrarToast('⚠️ Notificações não suportadas neste navegador','warn'); return; }
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted'){ mostrarToast('⚠️ Permissão de notificação negada','warn'); return; }
+  const parts = data.split('/');
+  if(parts.length < 3){ mostrarToast('⚠️ Data no formato dd/mm/aaaa','warn'); return; }
+  const horaParts = hora.replace('h',':').replace('H',':').split(':');
+  const gameTime = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]), parseInt(horaParts[0])||0, parseInt(horaParts[1])||0);
+  const notifTime = new Date(gameTime.getTime() - 2*60*60*1000);
+  const now = new Date();
+  if(notifTime <= now){ mostrarToast('⚠️ Menos de 2h para o jogo — impossível agendar','warn'); return; }
+  const delay = notifTime.getTime() - now.getTime();
+  clearTimeout(window._notifTimer);
+  window._notifTimer = setTimeout(() => {
+    new Notification('⚽ Prompt Master Prospere', {
+      body: `Jogo contra ${adv||'o adversário'} em 2 horas! Crie a arte agora.`,
+      tag: 'pregame'
+    });
+  }, delay);
+  const h = Math.round(delay/3600000);
+  mostrarToast(`🔔 Lembrete agendado — ${h}h até a notificação!`, 'success');
+}
+
+// ═══════════════════════════════════
+// COMPARTILHAR VIA WHATSAPP
+// ═══════════════════════════════════
+function compartilharWhatsApp(){
+  const val = buildFullPrompt();
+  if(!val.trim()){ mostrarToast('⚠️ Gere um prompt primeiro!','warn'); return; }
+  const texto = encodeURIComponent(val.substring(0, 3000));
+  window.open(`https://api.whatsapp.com/send?text=${texto}`, '_blank');
+  mostrarToast('💬 Abrindo WhatsApp...','success');
+}
+
+// ═══════════════════════════════════
+// BACKUP COMPLETO
+// ═══════════════════════════════════
+const BACKUP_KEYS = ['prospere_partidas','prospere_prompts','prospere_favs','prospere_tags',
+  'prospere_advs','prospere_frases','prospere_profiles','prospere_draft',
+  'prospere_theme','prospere_resultados','prospere_templates'];
+
+function exportarBackup(){
+  const backup = { _exportadoEm: new Date().toISOString(), _versao: 'V6' };
+  BACKUP_KEYS.forEach(k => {
+    const val = localStorage.getItem(k);
+    if(val) try { backup[k] = JSON.parse(val); } catch(e){}
+  });
+  const blob = new Blob([JSON.stringify(backup, null, 2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `backup-prospere-${Date.now()}.json`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  mostrarToast('💿 Backup completo exportado!','success');
+}
+
+function importarBackup(event){
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      let count = 0;
+      BACKUP_KEYS.forEach(k => {
+        if(backup[k] !== undefined){ localStorage.setItem(k, JSON.stringify(backup[k])); count++; }
+      });
+      renderHistory(); atualizarAdvList(); renderFrasesCustom(); renderProfileSelector();
+      restoreDraft();
+      mostrarToast(`📀 Backup restaurado! (${count} conjuntos de dados)`,'success');
+    } catch(err){
+      mostrarToast('⚠️ Arquivo de backup inválido','warn');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ═══════════════════════════════════
+// TELA CHEIA
+// ═══════════════════════════════════
+function toggleFullscreen(){
+  const layout = document.querySelector('.layout');
+  const btn = document.getElementById('btnFullscreen');
+  const on = layout.classList.toggle('fullscreen');
+  btn.textContent = on ? '⤡' : '⤢';
+  btn.title = on ? 'Recolher sidebar' : 'Expandir área de edição';
+  localStorage.setItem('prospere_fullscreen', on ? '1' : '');
+}
+(function(){
+  if(localStorage.getItem('prospere_fullscreen')){
+    document.addEventListener('DOMContentLoaded', () => {
+      const layout = document.querySelector('.layout');
+      const btn = document.getElementById('btnFullscreen');
+      if(layout) layout.classList.add('fullscreen');
+      if(btn){ btn.textContent='⤡'; btn.title='Recolher sidebar'; }
+    }, {once:true});
+  }
+})();
 
 // ═══════════════════════════════════
 // COMPARTILHAR PROMPT VIA LINK
@@ -1242,53 +1568,77 @@ async function exportarKit(){
 function abrirDashboard(){
   const ph = JSON.parse(localStorage.getItem('prospere_prompts') || '[]');
   const favs = JSON.parse(localStorage.getItem('prospere_favs') || '[]');
+  const tags = JSON.parse(localStorage.getItem('prospere_tags') || '{}');
+  const resultados = JSON.parse(localStorage.getItem('prospere_resultados') || '{}');
   const partidas = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
 
   const totalPrompts = ph.length;
-  const totalPartidas = partidas.length;
   const totalFavs = favs.length;
+  const totalResultados = Object.keys(resultados).length;
 
-  // adversário mais enfrentado
+  // taxa de aprovação
+  const comBom = ph.filter(p => (tags[p.ts]||[]).includes('bom')).length;
+  const comRuim = ph.filter(p => (tags[p.ts]||[]).includes('ruim')).length;
+  const taxaAprov = totalPrompts ? Math.round((comBom / totalPrompts) * 100) : 0;
+
+  // ranking de adversários
   const advCount = {};
-  ph.forEach(p => { if(p.adv){ advCount[p.adv] = (advCount[p.adv]||0)+1; } });
+  ph.forEach(p => { if(p.adv) advCount[p.adv] = (advCount[p.adv]||0)+1; });
   const advRanking = Object.entries(advCount).sort((a,b) => b[1]-a[1]).slice(0,5);
 
-  // tipo de arte mais usado (extraído do campo secoes.identidade, que contém "TIPO DE ARTE: X")
+  // ranking de tipos de arte
   const tipoCount = {};
   ph.forEach(p => {
     const txt = (p.secoes && p.secoes.identidade) || '';
     const match = txt.match(/TIPO DE ARTE:\s*([^\n]+)/);
-    const tipo = match ? match[1].trim() : 'Story 9:16 (padrão)';
-    tipoCount[tipo] = (tipoCount[tipo]||0)+1;
+    tipoCount[match ? match[1].trim() : 'Story 9:16'] = (tipoCount[match?match[1].trim():'Story 9:16']||0)+1;
   });
   const tipoRanking = Object.entries(tipoCount).sort((a,b) => b[1]-a[1]);
 
-  const maxAdv = advRanking.length ? advRanking[0][1] : 1;
+  // ranking de paletas com taxa de resultado bom
+  const paletaCount = {}, paletaBom = {};
+  ph.forEach(p => {
+    const txt = (p.secoes && p.secoes.paleta) || '';
+    const match = txt.match(/Paleta escolhida:\s*([^\n]+)/);
+    const paleta = match ? match[1].trim() : null;
+    if(!paleta) return;
+    paletaCount[paleta] = (paletaCount[paleta]||0)+1;
+    if((tags[p.ts]||[]).includes('bom')) paletaBom[paleta] = (paletaBom[paleta]||0)+1;
+  });
+  const paletaRanking = Object.entries(paletaCount).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+  function bars(ranking, max, extra){
+    if(!ranking.length) return '<p style="font-size:12px;color:var(--muted)">Nenhum dado ainda.</p>';
+    return ranking.map(([nome,count]) => {
+      const pct = Math.max(12,(count/max)*100);
+      const suffix = extra ? extra(nome, count) : '';
+      return `<div class="dash-bar-row">
+        <span class="dash-bar-label" title="${esc(nome)}">${esc(nome)}</span>
+        <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${pct}%">${count}${suffix}</div></div>
+      </div>`;
+    }).join('');
+  }
+
+  const maxAdv  = advRanking.length  ? advRanking[0][1]  : 1;
   const maxTipo = tipoRanking.length ? tipoRanking[0][1] : 1;
-
-  const advBars = advRanking.length ? advRanking.map(([nome,count]) => `
-    <div class="dash-bar-row">
-      <span class="dash-bar-label" title="${esc(nome)}">${esc(nome)}</span>
-      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.max(12,(count/maxAdv)*100)}%">${count}</div></div>
-    </div>`).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhum dado ainda.</p>';
-
-  const tipoBars = tipoRanking.length ? tipoRanking.map(([nome,count]) => `
-    <div class="dash-bar-row">
-      <span class="dash-bar-label" title="${esc(nome)}">${esc(nome)}</span>
-      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.max(12,(count/maxTipo)*100)}%">${count}</div></div>
-    </div>`).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhum dado ainda.</p>';
+  const maxPal  = paletaRanking.length ? paletaRanking[0][1] : 1;
 
   document.getElementById('dashboardContent').innerHTML = `
     <div class="dash-grid">
-      <div class="dash-stat"><div class="dash-stat-num">${totalPrompts}</div><div class="dash-stat-label">Prompts gerados</div></div>
-      <div class="dash-stat"><div class="dash-stat-num">${totalPartidas}</div><div class="dash-stat-label">Partidas salvas</div></div>
+      <div class="dash-stat"><div class="dash-stat-num">${totalPrompts}</div><div class="dash-stat-label">Prompts salvos</div></div>
       <div class="dash-stat"><div class="dash-stat-num">${totalFavs}</div><div class="dash-stat-label">Favoritos</div></div>
-      <div class="dash-stat"><div class="dash-stat-num">${genCount}</div><div class="dash-stat-label">Gerações nesta sessão</div></div>
+      <div class="dash-stat"><div class="dash-stat-num">${taxaAprov}%</div><div class="dash-stat-label">Taxa de aprovação</div></div>
+      <div class="dash-stat"><div class="dash-stat-num">${totalResultados}</div><div class="dash-stat-label">Fotos de resultado</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+      👍 ${comBom} aprovados · 👎 ${comRuim} reprovados · ${genCount} gerações nesta sessão
     </div>
     <div class="dash-section-title">⚔️ Adversários mais enfrentados</div>
-    ${advBars}
+    ${bars(advRanking, maxAdv)}
     <div class="dash-section-title">🎨 Tipos de arte mais usados</div>
-    ${tipoBars}
+    ${bars(tipoRanking, maxTipo)}
+    <div class="dash-section-title">🖌️ Paletas mais usadas</div>
+    ${bars(paletaRanking, maxPal, (nome) => paletaBom[nome] ? ` · 👍${paletaBom[nome]}` : '')}
   `;
   document.getElementById('modalDashboard').classList.add('open');
 }
@@ -1311,9 +1661,18 @@ function mostrarToast(msg, type=''){
 // ═══════════════════════════════════
 // INIT
 // ═══════════════════════════════════
+(function(){
+  const savedIdioma = localStorage.getItem('prospere_idioma');
+  if(savedIdioma){ idioma = savedIdioma; }
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('langToggle');
+    if(btn){ btn.textContent = idioma === 'en' ? '🇺🇸' : '🇧🇷'; btn.title = idioma === 'en' ? 'Prompt em inglês' : 'Prompt em português'; }
+  }, {once:true});
+})();
 renderHistory();
 atualizarAdvList();
 renderFrasesCustom();
 renderProfileSelector();
+renderTemplateList();
 restoreDraft();
 carregarPromptDaURL();

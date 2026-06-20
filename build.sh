@@ -22,6 +22,9 @@ html = html.replace(
     '<script src="app.js"></script>',
     f'<script>\n{js}\n</script>'
 )
+# Remove manifest/SW references (not needed in standalone file)
+html = html.replace('<link rel="manifest" href="manifest.json">\n', '')
+html = html.replace("<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>\n", '')
 
 with open('dist/prompt-master-v6.html', 'w', encoding='utf-8') as f:
     f.write(html)
