@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { AdminUser } from '@/types'
+import type { AdminUser, UserRole } from '@/types'
 import { useRouter } from 'next/navigation'
 
+interface AdminUserWithRole extends AdminUser {
+  role?: UserRole
+}
+
 export default function AdminPage() {
-  const [users, setUsers] = useState<AdminUser[]>([])
+  const [users, setUsers] = useState<AdminUserWithRole[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending')
   const router = useRouter()
@@ -14,11 +18,19 @@ export default function AdminPage() {
 
   async function load() {
     setLoading(true)
-    const { data } = await supabase
+    const { data: statusData } = await supabase
       .from('user_status')
       .select('*')
       .order('created_at', { ascending: false })
-    setUsers(data ?? [])
+
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('user_id, role')
+
+    const rolesMap: Record<string, UserRole> = {}
+    rolesData?.forEach(r => { rolesMap[r.user_id] = r.role })
+
+    setUsers((statusData ?? []).map(u => ({ ...u, role: rolesMap[u.user_id] })))
     setLoading(false)
   }
 
@@ -29,8 +41,12 @@ export default function AdminPage() {
     setUsers(u => u.map(x => x.user_id === userId ? { ...x, status } : x))
   }
 
-  const filtered = users.filter(u => filter === 'all' ? true : u.status === filter)
+  async function setRole(userId: string, role: UserRole) {
+    await supabase.from('user_roles').update({ role }).eq('user_id', userId)
+    setUsers(u => u.map(x => x.user_id === userId ? { ...x, role } : x))
+  }
 
+  const filtered = users.filter(u => filter === 'all' ? true : u.status === filter)
   const counts = {
     pending: users.filter(u => u.status === 'pending').length,
     approved: users.filter(u => u.status === 'approved').length,
@@ -39,12 +55,12 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-[#f0b429]">⚙️ Painel Administrativo</h1>
-            <p className="text-[#888898] text-sm mt-1">Gerenciar acessos de usuários</p>
+            <p className="text-[#888898] text-sm mt-1">Gerenciar acessos e permissões de usuários</p>
           </div>
           <button
             onClick={() => router.push('/')}
@@ -77,7 +93,6 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Filter all */}
         <button
           onClick={() => setFilter('all')}
           className={`mb-4 text-xs px-3 py-1 rounded-full border transition-colors ${
@@ -99,6 +114,7 @@ export default function AdminPage() {
                 <tr className="border-b border-[#2a2a3e]">
                   <th className="text-left py-3 px-4 text-xs text-[#888898] font-medium">E-mail</th>
                   <th className="text-left py-3 px-4 text-xs text-[#888898] font-medium">Status</th>
+                  <th className="text-left py-3 px-4 text-xs text-[#888898] font-medium">Perfil</th>
                   <th className="text-left py-3 px-4 text-xs text-[#888898] font-medium">Cadastro</th>
                   <th className="py-3 px-4 text-xs text-[#888898] font-medium text-right">Ações</th>
                 </tr>
@@ -115,6 +131,20 @@ export default function AdminPage() {
                       }`}>
                         {u.status === 'approved' ? '✅ Aprovado' : u.status === 'rejected' ? '❌ Negado' : '⏳ Pendente'}
                       </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <select
+                        value={u.role ?? 'user'}
+                        onChange={e => setRole(u.user_id, e.target.value as UserRole)}
+                        className={`text-xs px-2 py-1 rounded-lg border bg-[#1e1e2e] transition-colors cursor-pointer ${
+                          u.role === 'admin'
+                            ? 'border-[#f0b429]/50 text-[#f0b429]'
+                            : 'border-[#2a2a3e] text-[#888898]'
+                        }`}
+                      >
+                        <option value="user">👤 Usuário</option>
+                        <option value="admin">⭐ Admin</option>
+                      </select>
                     </td>
                     <td className="py-3 px-4 text-[#888898] text-xs">
                       {new Date(u.created_at).toLocaleDateString('pt-BR')}

@@ -36,25 +36,8 @@ function LoginContent() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
       if (error) { setErro('❌ ' + error.message); return }
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setErro('❌ Erro ao obter usuário'); return }
-
-      const { data: status } = await supabase
-        .from('user_status')
-        .select('status')
-        .eq('user_id', user.id)
-        .single()
-
-      if (!status || status.status === 'pending') {
-        router.push('/aguardando')
-      } else if (status.status === 'rejected') {
-        await supabase.auth.signOut()
-        setErro('❌ Seu acesso foi negado pelo administrador.')
-      } else {
-        router.push('/')
-        router.refresh()
-      }
+      router.push('/')
+      router.refresh()
     } finally {
       setLoading(false)
     }
@@ -75,8 +58,11 @@ function LoginContent() {
 
       const userId = data.user?.id
       if (userId) {
-        await supabase.from('user_status').upsert({ user_id: userId, email, status: 'pending' })
-        await supabase.from('user_roles').upsert({ user_id: userId, role: 'user' })
+        await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, email }),
+        })
       }
 
       setSucesso('✅ Cadastro realizado! Aguarde a aprovação do administrador para acessar o sistema.')
@@ -126,7 +112,7 @@ function LoginContent() {
               </div>
             )}
 
-            <form onSubmit={tab === 'login' ? handleLogin : handleRegister} className="space-y-4">
+            <form suppressHydrationWarning onSubmit={tab === 'login' ? handleLogin : handleRegister} className="space-y-4">
               {tab === 'register' && (
                 <div>
                   <label className="block text-xs font-medium text-[#888898] mb-1">Nome completo</label>

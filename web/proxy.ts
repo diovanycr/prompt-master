@@ -42,23 +42,9 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse
   }
 
-  // protege todas as outras rotas
+  // protege todas as outras rotas — só verifica autenticação
+  // o check de status (pending/approved) é feito no client via AuthProvider
   if (!user) return NextResponse.redirect(new URL('/login', request.url))
-
-  // verifica se o usuário está aprovado
-  const { data: status } = await supabase
-    .from('user_status')
-    .select('status')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!status || status.status === 'pending') {
-    return NextResponse.redirect(new URL('/aguardando', request.url))
-  }
-  if (status.status === 'rejected') {
-    await supabase.auth.signOut()
-    return NextResponse.redirect(new URL('/login?erro=acesso_negado', request.url))
-  }
 
   return supabaseResponse
 }

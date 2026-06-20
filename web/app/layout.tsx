@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="h-full dark">
-      <body className={`${inter.className} min-h-full bg-[#0a0a0f] text-[#e8e8f0]`}>
+      <body suppressHydrationWarning className={`${inter.className} min-h-full bg-[#0a0a0f] text-[#e8e8f0]`}>
         {children}
       </body>
     </html>
