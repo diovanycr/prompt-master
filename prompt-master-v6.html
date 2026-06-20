@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prompt Master Prospere V6</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f9f9f8;--surface:#ffffff;--surface2:#f4f3f1;--sidebar:#fafaf9;
+  --border:#e8e6e1;--border2:#d4d1cb;
+  --accent:#1a1a1a;--accent2:#3d3d3d;
+  --gold:#b8860b;--gold-light:#fdf6e3;
+  --text:#1a1a1a;--muted:#888480;--hint:#b5b2ac;
+  --input-bg:#ffffff;
+  --green:#2d7a4f;--orange:#c2630a;--red:#c23b2a;
+}
+[data-theme="dark"]{
+  --bg:#141413;--surface:#1e1e1c;--surface2:#252523;--sidebar:#1a1a18;
+  --border:#2e2e2b;--border2:#3a3a36;
+  --accent:#e8e6e1;--accent2:#c8c5be;
+  --gold:#d4a82a;--gold-light:#2a2210;
+  --text:#e8e6e1;--muted:#7a7874;--hint:#555250;
+  --input-bg:#1e1e1c;
+  --green:#3a9e65;--orange:#d4742a;--red:#d44a38;
+}
+[data-theme="dark"] .psec-body textarea{color:#c0bdb8}
+[data-theme="dark"] #rawOut{color:#c0bdb8}
+[data-theme="dark"] select option{background:#1e1e1c}
+[data-theme="dark"] .int-btn.active-celebracao{background:#1a2e22;color:var(--green)}
+[data-theme="dark"] .int-btn.active-confronto{background:#2e1a18;color:var(--red)}
+[data-theme="dark"] .int-btn.active-institucional{background:#252523;color:#bbb}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;transition:background .25s,color .25s}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+.header-icon{width:38px;height:38px;background:var(--text);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+header h1{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;line-height:1;color:var(--text)}
+header p{font-size:11px;color:var(--muted);font-weight:500}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.badge{background:var(--text);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:1px}
+.gen-counter{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:4px 12px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.gen-counter span{color:var(--gold);font-weight:700}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:390px 1fr;height:calc(100vh - 62px);overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{background:var(--sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+.section{padding:14px 18px;border-bottom:1px solid var(--border)}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--hint);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+input[type=text],select{width:100%;background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:8px 11px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:500;margin-bottom:10px;transition:border-color .2s,box-shadow .2s;outline:none}
+input[type=text]:focus,select:focus{border-color:var(--border2);box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+select option{background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* UPLOAD */
+.uploads-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px}
+.upload-box{border:1px dashed var(--border2);border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--input-bg)}
+.upload-box:hover{border-color:var(--accent2);background:var(--surface2)}
+.upload-box.has-img{border-style:solid;border-color:var(--border2)}
+.upload-box img{width:100%;height:54px;object-fit:contain;border-radius:5px;display:block;margin:0 auto 4px}
+.upload-box p{font-size:10px;color:var(--muted);font-weight:600;line-height:1.2}
+.upload-box input{display:none}
+.upload-warn{display:none;position:absolute;top:3px;right:3px;background:var(--orange);border-radius:50%;width:14px;height:14px;font-size:9px;align-items:center;justify-content:center;color:#fff;font-weight:700}
+.upload-box.missing .upload-warn{display:flex}
+
+/* TOGGLES */
+.toggle-group{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.toggle{padding:4px 11px;border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;background:var(--input-bg);transition:all .15s;font-family:'Rajdhani',sans-serif;text-transform:uppercase;letter-spacing:.5px}
+.toggle:hover{border-color:var(--border2);color:var(--text)}
+.toggle.active{color:#fff;background:var(--text);border-color:var(--text)}
+.toggle.gold.active{color:#7a5800;background:var(--gold-light);border-color:var(--gold)}
+
+/* FRASES */
+.frase-chip{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--muted);cursor:pointer;background:var(--input-bg);display:block;margin-bottom:5px;font-family:'Rajdhani',sans-serif;font-weight:600;line-height:1.3;transition:all .15s}
+.frase-chip:hover,.frase-chip.sel{border-color:var(--gold);color:var(--gold);background:var(--gold-light)}
+
+/* INTENSIDADE */
+.intensity-bar{display:grid;grid-template-columns:1fr 1fr 1fr;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin-bottom:10px}
+.int-btn{padding:8px 4px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;background:var(--input-bg);color:var(--muted);border:none;font-family:'Rajdhani',sans-serif;transition:all .15s;border-right:1px solid var(--border)}
+.int-btn:last-child{border-right:none}
+.int-btn.active-celebracao{background:#eef8f2;color:var(--green)}
+.int-btn.active-confronto{background:#fdf0ee;color:var(--red)}
+.int-btn.active-institucional{background:#f0f0f0;color:#333}
+
+/* HISTORICO */
+.history-item{padding:6px 10px;border-radius:6px;font-size:12px;color:var(--muted);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.history-item:hover{background:var(--surface2);color:var(--text)}
+.history-item .del{color:var(--red);font-size:14px;opacity:0;transition:opacity .15s;background:none;border:none;cursor:pointer;font-family:inherit}
+.history-item:hover .del{opacity:1}
+
+/* PROMPT HISTORY ITEM */
+.phist-item{padding:10px 12px;border-radius:7px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;background:var(--input-bg);transition:border-color .2s,box-shadow .2s}
+.phist-item:hover{border-color:var(--border2);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.phist-item .ph-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.phist-item .ph-title{font-size:12px;font-weight:700;color:var(--text)}
+.phist-item .ph-meta{font-size:10px;color:var(--hint)}
+.phist-item .ph-preview{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-tags{display:flex;gap:5px;margin-top:6px}
+.ph-tag-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;opacity:.5;transition:all .15s}
+.ph-tag-btn:hover{opacity:.85}
+.ph-tag-btn.active{opacity:1;border-color:var(--border2)}
+.ph-tag-btn.active.tag-usado{background:var(--surface2);border-color:var(--green)}
+.ph-tag-btn.active.tag-bom{background:var(--surface2);border-color:var(--green)}
+.ph-tag-btn.active.tag-ruim{background:var(--surface2);border-color:var(--red)}
+
+/* OUTPUT AREA */
+.output-area{display:flex;flex-direction:column;background:var(--surface2);overflow:hidden}
+
+/* TABS */
+.output-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface)}
+.otab{padding:10px 18px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--hint);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Rajdhani',sans-serif}
+.otab:hover{color:var(--muted)}
+.otab.active{color:var(--text);border-bottom-color:var(--text)}
+
+.output-toolbar{padding:10px 18px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.output-toolbar .lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--hint)}
+.char-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--hint)}
+
+/* WARN BANNER */
+.warn-banner{display:none;background:#fff8f2;border-bottom:1px solid #f5dbc8;padding:7px 18px;font-size:12px;color:var(--orange);font-weight:600;gap:6px;align-items:center}
+.warn-banner.show{display:flex}
+
+/* SECOES DO PROMPT */
+.prompt-sections{flex:1;overflow-y:auto;padding:14px}
+.prompt-sections::-webkit-scrollbar{width:3px}
+.prompt-sections::-webkit-scrollbar-thumb{background:var(--border2)}
+.psec{border:1px solid var(--border);border-radius:8px;margin-bottom:7px;overflow:hidden;background:var(--surface)}
+.psec-header{padding:9px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--surface);user-select:none;transition:background .15s}
+.psec-header:hover{background:var(--surface2)}
+.psec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text);flex:1}
+.psec-chevron{font-size:13px;color:var(--hint);transition:transform .2s}
+.psec.open .psec-chevron{transform:rotate(180deg)}
+.psec-body{display:none;padding:10px 12px;border-top:1px solid var(--border)}
+.psec.open .psec-body{display:block}
+.psec-body textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:#444;border-radius:6px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.6;resize:vertical;min-height:80px;outline:none;transition:border-color .2s}
+.psec-body textarea:focus{border-color:var(--border2)}
+
+/* RAW TEXTAREA */
+#rawOut{flex:1;background:var(--surface);border:none;border-radius:0;color:#3a3a3a;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;padding:18px;resize:none;outline:none;width:100%;display:none}
+
+/* PROMPT HISTORY TAB */
+.ph-tab-content{flex:1;overflow-y:auto;padding:14px;display:none}
+.ph-tab-content::-webkit-scrollbar{width:3px}
+.ph-tab-content::-webkit-scrollbar-thumb{background:var(--border2)}
+.ph-empty{text-align:center;padding:40px 20px;color:var(--hint);font-size:13px}
+
+/* BOTOES FIXOS */
+.btn-bar{padding:12px 18px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:7px;flex-wrap:wrap;position:relative}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border:none;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--text);color:#fff;flex:1}
+.btn-primary:hover{background:var(--accent2)}
+.btn-random{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.btn-random:hover{background:var(--border);color:var(--text)}
+
+/* PAINEL DE TRAVAS */
+.lock-panel{display:none;position:absolute;bottom:calc(100% + 8px);left:18px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px;width:260px;box-shadow:0 8px 30px rgba(0,0,0,.15);z-index:50}
+.lock-panel.open{display:block}
+.lock-panel-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+.lock-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;color:var(--text)}
+.lock-btn{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:13px;transition:all .15s}
+.lock-btn:hover{border-color:var(--gold)}
+.lock-btn.locked{background:var(--gold-light);border-color:var(--gold)}
+.btn-sec{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.btn-sec:hover{border-color:var(--border2);color:var(--text)}
+.btn-gold{background:var(--gold-light);color:var(--gold);border:1px solid #e8cc7a}
+.btn-gold:hover{background:#faeec0}
+
+/* DARK MODE TOGGLE */
+.dark-toggle{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:13px;cursor:pointer;transition:all .2s;color:var(--text)}
+.dark-toggle:hover{border-color:var(--border2)}
+
+/* FAVORITO no histórico de prompts */
+.phist-item{position:relative}
+.phist-fav{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:14px;opacity:.4;transition:opacity .15s,transform .15s}
+.phist-fav:hover,.phist-fav.fav{opacity:1}
+.phist-fav.fav{transform:scale(1.15)}
+.ph-fav-badge{display:inline-block;font-size:9px;background:var(--gold-light);color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:1px 6px;font-weight:700;letter-spacing:.5px;margin-left:4px;vertical-align:middle}
+
+/* INDICADOR DE SEÇÃO MODIFICADA */
+.psec-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);display:none;flex-shrink:0}
+.psec.modified .psec-dot{display:block}
+
+/* CONTAGEM DE TOKENS */
+.token-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--hint);margin-left:6px}
+
+/* ATALHOS HINT */
+.shortcuts-hint{font-size:10px;color:var(--hint);margin-left:auto;font-family:'JetBrains Mono',monospace;display:flex;gap:8px;align-items:center}
+.kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 5px;font-size:10px}
+
+/* TAB PREVIEW */
+.preview-tab-content{flex:1;overflow-y:auto;padding:14px;display:none}
+.preview-tab-content::-webkit-scrollbar{width:3px}
+.preview-tab-content::-webkit-scrollbar-thumb{background:var(--border2)}
+.preview-card{border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;background:var(--surface)}
+.preview-card-header{padding:8px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.preview-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.preview-card-body{padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word}
+
+/* MODAL COMPARAÇÃO */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;width:100%;max-width:960px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border2)}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text)}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);transition:color .15s}
+.modal-close:hover{color:var(--text)}
+.modal-body{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;overflow:hidden}
+.modal-col{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+.modal-col:last-child{border-right:none}
+.modal-col-header{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.modal-col textarea{flex:1;background:var(--surface);border:none;outline:none;resize:none;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text);width:100%}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.dash-stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.dash-stat-num{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);letter-spacing:1px}
+.dash-stat-label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.dash-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:16px 0 8px}
+.dash-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.dash-bar-label{width:120px;flex-shrink:0;color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-bar-track{flex:1;background:var(--surface2);border-radius:4px;height:18px;overflow:hidden}
+.dash-bar-fill{height:100%;background:var(--gold);border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:10px;color:#fff;font-weight:700;min-width:24px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:.3px;transform:translateY(60px);opacity:0;transition:all .3s;z-index:999;max-width:300px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:#a8d5bc;color:var(--green)}
+.toast.warn{border-color:#f5c6a0;color:var(--orange)}
+
+/* RESPONSIVE MOBILE */
+@media(max-width:768px){
+  body{overflow:auto}
+  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto}
+  .sidebar{border-right:none;border-bottom:1px solid var(--border);max-height:60vh;overflow-y:auto}
+  .output-area{height:calc(100vh - 62px);min-height:500px}
+  header h1{font-size:18px}
+  .badge{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">⚽</div>
+  <div>
+    <h1>Prompt Master Prospere</h1>
+    <p>Gerador profissional para campanhas do Kaio Genaro</p>
+  </div>
+  <div class="header-right">
+    <div class="gen-counter">Geração #<span id="genNum">0</span></div>
+    <button class="dark-toggle" id="dashboardBtn" onclick="abrirDashboard()" title="Ver estatísticas de uso" style="margin-right:-4px">📊</button>
+    <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Alternar dark mode">🌙</button>
+    <span class="badge">V6</span>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<div class="sidebar">
+
+  <!-- UPLOADS -->
+  <div class="section">
+    <div class="sec-title">Imagens de Referência</div>
+    <div class="uploads-grid">
+      <div class="upload-box missing" id="box-atleta" onclick="document.getElementById('fotoAtleta').click()">
+        <div class="upload-warn">!</div>
+        <img id="prev-atleta" style="display:none">
+        <p id="txt-atleta">📸 Foto<br>Atleta</p>
+        <input type="file" id="fotoAtleta" accept="image/*">
+      </div>
+      <div class="upload-box missing" id="box-logo1" onclick="document.getElementById('logo1').click()">
+        <div class="upload-warn">!</div>
+        <img id="prev-logo1" style="display:none">
+        <p id="txt-logo1">🛡️ Escudo<br>Prospere</p>
+        <input type="file" id="logo1" accept="image/*">
+      </div>
+      <div class="upload-box" id="box-logo2" onclick="document.getElementById('logo2').click()">
+        <div class="upload-warn">!</div>
+        <img id="prev-logo2" style="display:none">
+        <p id="txt-logo2">🛡️ Escudo<br>Adversário</p>
+        <input type="file" id="logo2" accept="image/*">
+      </div>
+    </div>
+    <p style="font-size:10px;color:var(--muted);font-weight:600">⚠️ Itens com ! precisam de imagem</p>
+    <button class="btn btn-sec" id="btnBaixarImgs" style="width:100%;margin-top:8px;font-size:11px;padding:8px;display:none" onclick="baixarImagens()">📥 Baixar imagens enviadas</button>
+    <p style="font-size:10px;color:var(--muted);margin-top:4px">💡 Lembre-se de anexar a foto junto com o prompt na hora de gerar a arte.</p>
+  </div>
+
+  <!-- ATLETA -->
+  <div class="section">
+    <div class="sec-title">Atleta & Clube</div>
+    <div class="row2">
+      <div><label>Nome do atleta</label><input type="text" id="nome" value="Kaio Genaro"></div>
+      <div><label>Categoria</label><input type="text" id="categoria" value="Sub-8"></div>
+    </div>
+    <label>Clube</label>
+    <input type="text" id="clube" value="Prospere Hortolândia Futsal">
+    <label>Campeonato</label>
+    <input type="text" id="campeonato" value="Campeonato Paulista A1 de Futsal 2026">
+    <div class="row2">
+      <div>
+        <label>Cor uniforme (principal)</label>
+        <input type="text" id="uniforme1" placeholder="ex: azul royal">
+      </div>
+      <div>
+        <label>Cor uniforme (detalhe)</label>
+        <input type="text" id="uniforme2" placeholder="ex: branco">
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTIDA -->
+  <div class="section">
+    <div class="sec-title">Partida</div>
+    <label>Adversário</label>
+    <input type="text" id="adv" placeholder="Ex: Sorocaba Futsal" list="advList">
+    <datalist id="advList"></datalist>
+    <div class="row2">
+      <div><label>Data</label><input type="text" id="data" placeholder="dd/mm/aaaa"></div>
+      <div><label>Horário</label><input type="text" id="hora" placeholder="00h00"></div>
+    </div>
+    <label>Local</label>
+    <input type="text" id="local" placeholder="Ginásio Municipal...">
+  </div>
+
+  <!-- INTENSIDADE -->
+  <div class="section">
+    <div class="sec-title">Nível de Intensidade</div>
+    <div class="intensity-bar">
+      <button class="int-btn" data-val="Celebracao" onclick="setIntensidade(this)">🎉 Celebração</button>
+      <button class="int-btn active-confronto" data-val="Confronto" onclick="setIntensidade(this)">🔥 Confronto</button>
+      <button class="int-btn" data-val="Institucional" onclick="setIntensidade(this)">🏆 Institucional</button>
+    </div>
+    <p id="int-desc" style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:2px">
+      Arte épica de confronto: energia máxima, expressão determinada, arena de batalha.
+    </p>
+  </div>
+
+  <!-- FORMATO -->
+  <div class="section">
+    <div class="sec-title">Formato & Visual</div>
+    <label>Tipo de arte</label>
+    <div class="toggle-group" id="tipoGroup">
+      <button class="toggle active" data-val="Instagram Story 9:16">Story 9:16</button>
+      <button class="toggle" data-val="Feed Instagram 4:5">Feed 4:5</button>
+      <button class="toggle" data-val="Banner horizontal">Banner</button>
+      <button class="toggle" data-val="Card MVP">MVP</button>
+      <button class="toggle" data-val="Card Convocação">Convocação</button>
+    </div>
+
+    <label>Ferramenta de destino</label>
+    <div class="toggle-group" id="ferramentaGroup">
+      <button class="toggle active" data-val="Generico">🌐 Genérico</button>
+      <button class="toggle" data-val="Midjourney">🎨 Midjourney</button>
+      <button class="toggle" data-val="ChatGPT">💬 ChatGPT</button>
+      <button class="toggle" data-val="Gemini">✨ Gemini</button>
+    </div>
+
+    <label>Paleta de cores</label>
+    <div class="toggle-group" id="paletaGroup">
+      <button class="toggle gold active" data-val="IA escolhe automaticamente a paleta mais impactante">🎲 IA Escolhe</button>
+      <button class="toggle" data-val="azul royal e dourado">Azul & Ouro</button>
+      <button class="toggle" data-val="preto e dourado premium">Preto & Ouro</button>
+      <button class="toggle" data-val="grafite e prata metálica">Grafite Prata</button>
+      <button class="toggle" data-val="azul royal e branco">Azul Branco</button>
+      <button class="toggle" data-val="vermelho e preto">Vermelho Preto</button>
+    </div>
+  </div>
+
+  <!-- AÇÃO & ÂNGULO -->
+  <div class="section">
+    <div class="sec-title">Ação & Câmera</div>
+    <label>Ação do atleta</label>
+    <div class="toggle-group" id="acaoGroup">
+      <button class="toggle gold active" data-val="IA escolhe automaticamente">🎲 IA Escolhe</button>
+      <button class="toggle" data-val="conduzindo a bola">Conduzindo</button>
+      <button class="toggle" data-val="finalizando a gol">Finalizando</button>
+      <button class="toggle" data-val="driblando o adversário">Driblando</button>
+      <button class="toggle" data-val="comemorando gol">Comemorando</button>
+      <button class="toggle" data-val="correndo em velocidade">Correndo</button>
+    </div>
+    <label>Ângulo de câmera</label>
+    <div class="toggle-group" id="anguloGroup">
+      <button class="toggle gold active" data-val="IA varia automaticamente o ângulo">🎲 IA Varia</button>
+      <button class="toggle" data-val="low angle dramático">Low Angle</button>
+      <button class="toggle" data-val="eye level esportivo">Eye Level</button>
+      <button class="toggle" data-val="dynamic side angle">Side Angle</button>
+      <button class="toggle" data-val="cinematic tracking shot">Tracking</button>
+      <button class="toggle" data-val="dramatic close-up no atleta">Close-up</button>
+    </div>
+  </div>
+
+  <!-- FRASE -->
+  <div class="section">
+    <div class="sec-title">Frase de Impacto</div>
+    <div id="frasesList">
+      <div class="frase-chip sel" onclick="selecionarFrase(this)">🎲 IA cria frase inédita automaticamente</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">O futuro começa com um sonho e uma bola</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">Talento não se compra, se conquista</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">Cada treino é um passo rumo à glória</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">Nascido para o futsal, destinado à vitória</div>
+      <div class="frase-chip" onclick="selecionarFrase(this)">Pequeno no tamanho, gigante no coração</div>
+    </div>
+    <div id="frasesCustomList"></div>
+    <label style="margin-top:6px">Ou escreva sua frase</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="fraseCustom" placeholder="Digite uma frase personalizada..." style="flex:1">
+      <button class="btn btn-sec" style="padding:8px 10px;font-size:11px" onclick="adicionarFraseBanco()" title="Salvar esta frase no banco para reutilizar depois">➕</button>
+    </div>
+  </div>
+
+  <!-- HISTORICO DE PARTIDAS -->
+  <div class="section">
+    <div class="sec-title">Histórico de Partidas</div>
+    <div id="historyList">
+      <p style="font-size:12px;color:var(--muted)">Nenhuma partida salva ainda.</p>
+    </div>
+  </div>
+
+  <!-- FERRAMENTAS -->
+  <div class="section">
+    <div class="sec-title">Ferramentas</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn btn-sec" style="font-size:11px;padding:8px" onclick="exportarConfig()">⬇️ Exportar config (.json)</button>
+      <button class="btn btn-sec" style="font-size:11px;padding:8px" onclick="document.getElementById('importFile').click()">⬆️ Importar config (.json)</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarConfig(event)">
+      <button class="btn btn-sec" style="font-size:11px;padding:8px" onclick="compartilharLink()">🔗 Compartilhar prompt via link</button>
+    </div>
+  </div>
+
+</div>
+<!-- / SIDEBAR -->
+
+<!-- ══════════════ OUTPUT ══════════════ -->
+<div class="output-area">
+
+  <div class="output-tabs">
+    <button class="otab active" onclick="switchTab('secoes',this)">📋 Seções</button>
+    <button class="otab" onclick="switchTab('preview',this)">👁️ Preview</button>
+    <button class="otab" onclick="switchTab('raw',this)">💻 Completo</button>
+    <button class="otab" onclick="switchTab('phistory',this)">🗂️ Histórico</button>
+  </div>
+
+  <div class="warn-banner" id="warnBanner">
+    <span>⚠️</span><span id="warnMsg">Atenção: imagens obrigatórias não enviadas</span>
+  </div>
+
+  <div class="output-toolbar">
+    <span class="lbl" id="toolbarLabel">Seções do prompt — clique para expandir e editar</span>
+    <span class="char-count" id="charCount">0 chars</span>
+    <span class="token-count" id="tokenCount">~0 tokens</span>
+    <span class="shortcuts-hint">
+      <span><span class="kbd">Ctrl+↵</span> Gerar</span>
+      <span><span class="kbd">Ctrl+C</span> Copiar</span>
+      <span><span class="kbd">Ctrl+S</span> Salvar</span>
+    </span>
+  </div>
+
+  <!-- TAB: SECOES -->
+  <div class="prompt-sections" id="tab-secoes">
+    <!-- preenchido por JS -->
+  </div>
+
+  <!-- TAB: PREVIEW -->
+  <div class="preview-tab-content" id="tab-preview">
+    <!-- preenchido por JS -->
+  </div>
+
+  <!-- TAB: RAW -->
+  <textarea id="rawOut" placeholder="Gere um prompt primeiro..."></textarea>
+
+  <!-- TAB: PROMPT HISTORY -->
+  <div class="ph-tab-content" id="tab-phistory">
+    <div class="ph-empty" id="phEmpty">Nenhum prompt salvo ainda.<br>Clique em 💾 Salvar após gerar.</div>
+  </div>
+
+  <div class="btn-bar" style="position:relative">
+    <button class="btn btn-primary" onclick="gerar()" title="Ctrl+Enter">⚡ Gerar</button>
+    <button class="btn btn-random" onclick="gerarAleatorio()" title="Variação rápida — sorteia categorias destravadas">🎲 Variação</button>
+    <button class="btn btn-sec" onclick="toggleLockPanel()" title="Travar categorias para não variarem">🔒 Travas</button>
+    <button class="btn btn-sec" onclick="copiar()" title="Ctrl+C">📋 Copiar</button>
+    <button class="btn btn-sec" onclick="salvarPartida()" title="Ctrl+S">💾 Salvar</button>
+    <button class="btn btn-sec" onclick="abrirComparacao()" title="Comparar geração atual com anterior">⇄ Comparar</button>
+    <button class="btn btn-sec" onclick="limparRascunho()" title="Limpar todos os campos">🧹 Limpar</button>
+    <button class="btn btn-gold" onclick="exportarPDF()">📄 PDF</button>
+
+    <div class="lock-panel" id="lockPanel">
+      <div class="lock-panel-title">Travar categorias na Variação 🎲</div>
+      <div class="lock-row" data-key="paleta"><span>🎨 Paleta de cores</span><button class="lock-btn" onclick="toggleTravamento('paleta',this)">🔓</button></div>
+      <div class="lock-row" data-key="acao"><span>⚡ Ação do atleta</span><button class="lock-btn" onclick="toggleTravamento('acao',this)">🔓</button></div>
+      <div class="lock-row" data-key="angulo"><span>📷 Ângulo de câmera</span><button class="lock-btn" onclick="toggleTravamento('angulo',this)">🔓</button></div>
+      <div class="lock-row" data-key="cenario"><span>🏟️ Cenário</span><button class="lock-btn" onclick="toggleTravamento('cenario',this)">🔓</button></div>
+      <div class="lock-row" data-key="layout"><span>📐 Layout/Composição</span><button class="lock-btn" onclick="toggleTravamento('layout',this)">🔓</button></div>
+      <div class="lock-row" data-key="iluminacao"><span>💡 Iluminação</span><button class="lock-btn" onclick="toggleTravamento('iluminacao',this)">🔓</button></div>
+      <div class="lock-row" data-key="tipografia"><span>✍️ Tipografia</span><button class="lock-btn" onclick="toggleTravamento('tipografia',this)">🔓</button></div>
+      <p style="font-size:10px;color:var(--muted);margin-top:8px">🔒 = não será sorteado na próxima Variação. Identidade, rosto, escudos e uniforme nunca variam.</p>
+    </div>
+  </div>
+
+</div>
+<!-- / OUTPUT -->
+
+</div>
+
+<!-- MODAL COMPARAÇÃO -->
+<div class="modal-overlay" id="modalComparacao">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⇄ Comparar Gerações</span>
+      <button class="modal-close" onclick="fecharComparacao()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-col">
+        <div class="modal-col-header">Geração Anterior</div>
+        <textarea id="compareLeft" placeholder="Nenhuma geração anterior salva..."></textarea>
+      </div>
+      <div class="modal-col">
+        <div class="modal-col-header">Geração Atual</div>
+        <textarea id="compareRight" placeholder="Gere um prompt primeiro..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="usarAnterior()">← Usar Anterior</button>
+      <button class="btn btn-primary" onclick="fecharComparacao()">✓ Manter Atual</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DASHBOARD -->
+<div class="modal-overlay" id="modalDashboard">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">📊 Estatísticas de Uso</span>
+      <button class="modal-close" onclick="fecharDashboard()">✕</button>
+    </div>
+    <div class="modal-body" style="display:block;overflow-y:auto;padding:20px">
+      <div id="dashboardContent"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="fecharDashboard()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+let genCount = 0;
+let intensidade = 'Confronto';
+let fraseSelecionada = '🎲 IA cria frase inédita automaticamente';
+let currentTab = 'secoes';
+let promptAnterior = '';  // para comparação de gerações
+
+const intensidadeMap = {
+  Celebracao: {
+    desc:'Arte de celebração: alegria, conquista, confetes, expressão de vitória e festa.',
+    cenario:'ambiente de celebração pós-vitória, festa, confetes, torcida em euforia',
+    expressao:'comemorando com alegria e euforia, grito de vitória, punho erguido',
+    slogan:'tom de conquista e celebração, frases de vitória e alegria'
+  },
+  Confronto: {
+    desc:'Arte épica de confronto: energia máxima, expressão determinada, arena de batalha.',
+    cenario:'arena de batalha, atmosfera de final, tensão máxima, luzes dramáticas de confronto',
+    expressao:'determinado, focado, olhar de guerreiro, confiança máxima antes do jogo',
+    slogan:'tom épico e de desafio, frases de garra e determinação'
+  },
+  Institucional: {
+    desc:'Arte institucional: elegante, profissional, representação oficial do clube.',
+    cenario:'ginásio profissional moderno, atmosfera clean e premium, identidade visual do clube',
+    expressao:'postura confiante e profissional, representando o clube com orgulho',
+    slogan:'tom institucional e de orgulho do clube, frases inspiradoras e elegantes'
+  }
+};
+
+// SEÇÕES DO PROMPT (editáveis)
+const SECOES = [
+  { id:'identidade', title:'🪪 Identidade Fixa' },
+  { id:'fidelidade', title:'👤 Fidelidade Facial' },
+  { id:'conceito', title:'🎬 Conceito Visual' },
+  { id:'uniforme', title:'👕 Uniforme' },
+  { id:'acao', title:'⚡ Ação & Câmera' },
+  { id:'cenario', title:'🏟️ Cenário & Iluminação' },
+  { id:'paleta', title:'🎨 Paleta de Cores' },
+  { id:'tipografia', title:'✍️ Tipografia & Textos' },
+  { id:'partida', title:'📅 Informações da Partida' },
+  { id:'frase', title:'💬 Frase de Impacto' },
+  { id:'qualidade', title:'🏆 Qualidade Final' },
+  { id:'negativo', title:'🚫 Evitar (Negative Prompt)' },
+];
+
+let secaoContent = {};
+
+// ═══════════════════════════════════
+// UPLOADS
+// ═══════════════════════════════════
+// guarda os arquivos originais enviados, para permitir download posterior
+const uploadedFiles = {};
+
+function setupUpload(inputId, prevId, txtId, boxId, obrigatorio){
+  document.getElementById(inputId).addEventListener('change', e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    uploadedFiles[inputId] = f;
+    const img = document.getElementById(prevId);
+    img.src = URL.createObjectURL(f);
+    img.style.display = 'block';
+    document.getElementById(txtId).style.display = 'none';
+    const box = document.getElementById(boxId);
+    box.classList.add('has-img');
+    if(obrigatorio) box.classList.remove('missing');
+    checkWarnings();
+    atualizarBotaoBaixarImgs();
+  });
+}
+setupUpload('fotoAtleta','prev-atleta','txt-atleta','box-atleta',true);
+setupUpload('logo1','prev-logo1','txt-logo1','box-logo1',true);
+setupUpload('logo2','prev-logo2','txt-logo2','box-logo2',false);
+
+function atualizarBotaoBaixarImgs(){
+  const btn = document.getElementById('btnBaixarImgs');
+  const temAlguma = Object.keys(uploadedFiles).length > 0;
+  btn.style.display = temAlguma ? 'block' : 'none';
+}
+
+function baixarImagens(){
+  const labels = { fotoAtleta: 'foto-atleta', logo1: 'escudo-prospere', logo2: 'escudo-adversario' };
+  const nomes = Object.keys(uploadedFiles);
+  if(!nomes.length){ mostrarToast('⚠️ Nenhuma imagem enviada ainda','warn'); return; }
+
+  const advSlug = (v('adv') || 'partida').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+
+  nomes.forEach((key, i) => {
+    const file = uploadedFiles[key];
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+    const label = labels[key] || key;
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${label}-${advSlug}.${ext}`;
+    document.body.appendChild(a);
+    // pequeno delay entre cliques para evitar que o navegador bloqueie downloads múltiplos simultâneos
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, i * 300);
+  });
+
+  mostrarToast(`📥 Baixando ${nomes.length} imagem(ns)...`, 'success');
+}
+
+function checkWarnings(){
+  const missing = [];
+  if(!document.getElementById('box-atleta').classList.contains('has-img')) missing.push('foto do atleta');
+  if(!document.getElementById('box-logo1').classList.contains('has-img')) missing.push('escudo Prospere');
+  const banner = document.getElementById('warnBanner');
+  if(missing.length){
+    document.getElementById('warnMsg').textContent = '⚠️ Pendente: ' + missing.join(', ');
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+checkWarnings();
+
+// ═══════════════════════════════════
+// TOGGLES
+// ═══════════════════════════════════
+document.querySelectorAll('.toggle-group').forEach(g => {
+  g.querySelectorAll('.toggle').forEach(b => {
+    b.addEventListener('click', () => {
+      g.querySelectorAll('.toggle').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    });
+  });
+});
+
+function getToggle(groupId){
+  const a = document.querySelector(`#${groupId} .toggle.active`);
+  return a ? a.dataset.val : '';
+}
+function setToggle(groupId, val){
+  const g = document.getElementById(groupId);
+  g.querySelectorAll('.toggle').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === val);
+  });
+}
+
+// ═══════════════════════════════════
+// INTENSIDADE
+// ═══════════════════════════════════
+function setIntensidade(btn){
+  document.querySelectorAll('.int-btn').forEach(b => b.className = 'int-btn');
+  const val = btn.dataset.val;
+  btn.classList.add('active-' + val.toLowerCase());
+  intensidade = val;
+  document.getElementById('int-desc').textContent = intensidadeMap[val].desc;
+}
+// init
+document.querySelectorAll('.int-btn').forEach(b => { if(b.dataset.val === 'Confronto') b.classList.add('active-confronto'); });
+
+// ═══════════════════════════════════
+// FRASES
+// ═══════════════════════════════════
+function selecionarFrase(el){
+  document.querySelectorAll('.frase-chip').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  fraseSelecionada = el.textContent;
+  document.getElementById('fraseCustom').value = '';
+}
+
+// ═══════════════════════════════════
+// BUILD SECTIONS
+// ═══════════════════════════════════
+function buildSections(data){
+  secaoContent = data;
+  const container = document.getElementById('tab-secoes');
+  container.innerHTML = '';
+  SECOES.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'psec';
+    div.id = 'psec-' + s.id;
+    div.innerHTML = `
+      <div class="psec-header" onclick="toggleSec('${s.id}')">
+        <span class="psec-title">${s.title}</span>
+        <span class="psec-dot" title="Seção editada manualmente"></span>
+        <span class="psec-chevron">▼</span>
+      </div>
+      <div class="psec-body">
+        <textarea id="stxt-${s.id}" oninput="secaoContent['${s.id}']=this.value;syncRaw();marcarModificada('${s.id}')">${data[s.id]||''}</textarea>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function marcarModificada(id){
+  const el = document.getElementById('psec-' + id);
+  if(el) el.classList.add('modified');
+}
+
+function toggleSec(id){
+  const el = document.getElementById('psec-' + id);
+  el.classList.toggle('open');
+}
+
+function syncRaw(){
+  const full = buildFullPrompt();
+  document.getElementById('rawOut').value = full;
+  const chars = full.length;
+  const tokens = Math.round(chars / 4);
+  document.getElementById('charCount').textContent = chars + ' chars';
+  const tc = document.getElementById('tokenCount');
+  if(tc) tc.textContent = '~' + tokens + ' tokens';
+  if(currentTab === 'preview') renderPreview();
+}
+
+function buildFullPrompt(){
+  return SECOES.map(s => secaoContent[s.id] || '').filter(Boolean).join('\n\n');
+}
+
+// ═══════════════════════════════════
+// GERAR
+// ═══════════════════════════════════
+const PALETAS = ['azul royal e dourado','preto e dourado premium','grafite e prata metálica','azul royal e branco','vermelho e preto','roxo neon premium','verde esmeralda e prata'];
+const ACOES = ['conduzindo a bola com maestria','finalizando a gol com potência','driblando o adversário','comemorando gol com euforia','correndo em velocidade máxima','disputando posse de bola','protegendo a posse com habilidade'];
+const ANGULOS = ['low angle dramático','eye level esportivo','dynamic side angle','cinematic tracking shot','dramatic close-up no atleta','wide arena shot','action shot cinematográfico'];
+
+// Bancos extras de variação — tudo aqui pode mudar livremente entre gerações.
+// NUNCA usar estes bancos para alterar identidade do atleta, escudos ou uniforme.
+const CENARIOS = [
+  'ginásio profissional lotado, torcida em festa',
+  'arena moderna com telão de LED ao fundo',
+  'quadra de clássico estadual, clima de decisão',
+  'túnel de entrada do ginásio, luz dramática vazando',
+  'noite de campeonato, holofotes principais acesos',
+  'vestiário épico antes da entrada em quadra',
+  'gramado/quadra com fumaça cênica leve e atmosfera de filme',
+  'arena com confetes e luzes de celebração'
+];
+const LAYOUTS = [
+  'composição assimétrica, atleta deslocado para a esquerda com espaço negativo à direita',
+  'composição centralizada, atleta exatamente no eixo central da arte',
+  'composição diagonal, linhas de força guiando o olhar de baixo para cima',
+  'composição em camadas, atleta em primeiro plano e elementos gráficos em profundidade',
+  'composição com moldura interna (frame dentro da arte) destacando o atleta',
+  'composição estilo pôster de cinema, atleta ocupando 2/3 da arte',
+  'composição com grid moderno e blocos de cor geométricos'
+];
+const ESTILOS_ILUMINACAO = [
+  'iluminação cinematográfica com contraste alto e sombras marcadas',
+  'iluminação dourada de golden hour, tom quente e nostálgico',
+  'iluminação neon vibrante, contornos coloridos no atleta',
+  'iluminação de estúdio premium, luz suave e uniforme',
+  'iluminação dramática com rim light forte contornando o atleta',
+  'iluminação volumétrica com feixes de luz atravessando a cena',
+  'iluminação de transmissão esportiva ao vivo (broadcast lighting)'
+];
+const ESTILOS_TIPOGRAFIA = [
+  'tipografia bold condensada, estilo jersey esportivo',
+  'tipografia serifada premium, estilo editorial de revista esportiva',
+  'tipografia futurista geométrica, estilo e-sports',
+  'tipografia manuscrita energética combinada com bloco bold',
+  'tipografia minimalista clean, hierarquia visual forte',
+  'tipografia metálica 3D com efeito de profundidade',
+  'tipografia estêncil militar, estilo convocação de elite'
+];
+
+// guarda o último valor sorteado de cada categoria, para nunca repetir 2x consecutivas
+const ultimoSorteio = { paleta:null, acao:null, angulo:null, cenario:null, layout:null, iluminacao:null, tipografia:null };
+
+// categorias "travadas" pelo usuário — não são re-sorteadas em 🎲 Variação enquanto travadas
+const categoriasTravadas = { paleta:false, acao:false, angulo:false, cenario:false, layout:false, iluminacao:false, tipografia:false };
+
+// sorteia um valor de um banco, evitando repetir o último sorteado (se o banco tiver mais de 1 opção)
+function sortearSemRepetir(banco, chave){
+  if(banco.length <= 1) return banco[0];
+  let escolha;
+  do { escolha = banco[Math.floor(Math.random()*banco.length)]; }
+  while(escolha === ultimoSorteio[chave]);
+  ultimoSorteio[chave] = escolha;
+  return escolha;
+}
+
+function toggleTravamento(chave, btn){
+  categoriasTravadas[chave] = !categoriasTravadas[chave];
+  btn.classList.toggle('locked', categoriasTravadas[chave]);
+  btn.textContent = categoriasTravadas[chave] ? '🔒' : '🔓';
+  btn.title = categoriasTravadas[chave] ? 'Travado — não será sorteado na Variação' : 'Destravado — será sorteado na Variação';
+}
+function toggleLockPanel(){
+  document.getElementById('lockPanel').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const panel = document.getElementById('lockPanel');
+  if(!panel) return;
+  const trigger = e.target.closest('[onclick*="toggleLockPanel"]');
+  if(!panel.contains(e.target) && !trigger) panel.classList.remove('open');
+});
+
+function gerar(aleatorio){
+  // VALIDAÇÃO: avisa sobre campos importantes faltando, mas não bloqueia a geração
+  if(!aleatorio){
+    const problemas = validarCampos();
+    if(problemas.length){
+      mostrarToast('⚠️ Faltando: ' + problemas.join(', '), 'warn');
+    }
+  }
+
+  const nome = v('nome') || 'Kaio Genaro';
+  const clube = v('clube') || 'Prospere Hortolândia Futsal';
+  const categoria = v('categoria') || 'Sub-8';
+  const campeonato = v('campeonato') || 'Campeonato Paulista A1 de Futsal 2026';
+  const adv = v('adv') || '[ADVERSÁRIO]';
+  registrarAdversario(v('adv'));
+  const data = v('data') || '[DATA]';
+  const hora = v('hora') || '[HORÁRIO]';
+  const local = v('local') || '[LOCAL]';
+  const u1 = v('uniforme1');
+  const u2 = v('uniforme2');
+  const uniformeDesc = (u1||u2) ? `${u1||''}${u2?' e '+u2:''}` : 'conforme uniforme oficial do clube';
+
+  const tipo = getToggle('tipoGroup');
+  const ferramenta = getToggle('ferramentaGroup');
+  const fraseCustom = v('fraseCustom');
+  const frase = fraseCustom || (fraseSelecionada.startsWith('🎲') ? 'IA cria frase inédita e inspiradora, nunca antes usada' : fraseSelecionada);
+
+  // Aspect ratio por tipo de arte, em formato neutro (usado para adaptar à sintaxe de cada ferramenta)
+  const aspectRatioMap = {
+    'Instagram Story 9:16': '9:16',
+    'Feed Instagram 4:5': '4:5',
+    'Banner horizontal': '16:9',
+    'Card MVP': '4:5',
+    'Card Convocação': '9:16'
+  };
+  const ar = aspectRatioMap[tipo] || '9:16';
+
+  // Sufixo técnico que cada ferramenta espera, ao final do prompt completo
+  function sufixoFerramenta(){
+    if(ferramenta === 'Midjourney') return `\n\n--ar ${ar} --v 6 --style raw --q 2`;
+    if(ferramenta === 'ChatGPT') return `\n\n[Anexe a foto do atleta e os escudos junto com este texto. Proporção de imagem: ${ar}.]`;
+    if(ferramenta === 'Gemini') return `\n\n[Anexe a foto do atleta e os escudos junto com este texto. Gere em proporção ${ar}.]`;
+    return `\n\nProporção de imagem: ${ar}.`;
+  }
+
+  let paleta = (aleatorio && !categoriasTravadas.paleta) ? sortearSemRepetir(PALETAS,'paleta') : getToggle('paletaGroup');
+  let acao = (aleatorio && !categoriasTravadas.acao) ? sortearSemRepetir(ACOES,'acao') : getToggle('acaoGroup');
+  let angulo = (aleatorio && !categoriasTravadas.angulo) ? sortearSemRepetir(ANGULOS,'angulo') : getToggle('anguloGroup');
+
+  // Variação extra (só no modo 🎲 Variação): cenário, layout, iluminação e tipografia.
+  // Identidade do atleta, escudos e uniforme NUNCA entram nesta sorteação.
+  // Categorias travadas pelo usuário mantêm o último valor sorteado em vez de re-sortear.
+  const cenarioVar = aleatorio ? (categoriasTravadas.cenario ? ultimoSorteio.cenario : sortearSemRepetir(CENARIOS,'cenario')) : null;
+  const layoutVar = aleatorio ? (categoriasTravadas.layout ? ultimoSorteio.layout : sortearSemRepetir(LAYOUTS,'layout')) : null;
+  const iluminacaoVar = aleatorio ? (categoriasTravadas.iluminacao ? ultimoSorteio.iluminacao : sortearSemRepetir(ESTILOS_ILUMINACAO,'iluminacao')) : null;
+  const tipografiaVar = aleatorio ? (categoriasTravadas.tipografia ? ultimoSorteio.tipografia : sortearSemRepetir(ESTILOS_TIPOGRAFIA,'tipografia')) : null;
+
+  if(aleatorio){
+    // Atualiza visualmente os toggles com os valores sorteados
+    setToggle('paletaGroup', paleta);
+    setToggle('acaoGroup', acao);
+    setToggle('anguloGroup', angulo);
+  }
+
+  const int = intensidadeMap[intensidade];
+  genCount++;
+  document.getElementById('genNum').textContent = genCount;
+
+  const hasFoto = document.getElementById('box-atleta').classList.contains('has-img');
+  const hasLogo1 = document.getElementById('box-logo1').classList.contains('has-img');
+  const hasLogo2 = document.getElementById('box-logo2').classList.contains('has-img');
+
+  const fotoWarn = !hasFoto ? '\n⚠️ ATENÇÃO: FOTO DO ATLETA NÃO ENVIADA — aguarde o envio para gerar a arte\n' : '';
+  const logo1Warn = !hasLogo1 ? '\n⚠️ ATENÇÃO: ESCUDO PROSPERE NÃO ENVIADO\n' : '';
+  const logo2Warn = !hasLogo2 ? '\n⚠️ ATENÇÃO: ESCUDO DO ADVERSÁRIO NÃO ENVIADO — integre o escudo de ' + adv.toUpperCase() + ' quando disponível\n' : '';
+
+  // ── BLOCOS BASE (comuns a todos os tipos) ──────────────────────────
+  const base_identidade = `IDENTIDADE FIXA\n${'─'.repeat(40)}\n\nAtleta: ${nome.toUpperCase()}\nClube: ${clube.toUpperCase()}\nCampeonato: ${campeonato.toUpperCase()}\nCategoria: ${categoria.toUpperCase()}\n\nO nome ${nome.toUpperCase()} deve ser um dos elementos MAIS DESTACADOS da arte.\nUsar fonte gigante, metal dourado premium, gold chrome, reflexos metálicos, visual luxuoso.`;
+
+  const base_fidelidade = `FIDELIDADE FACIAL MÁXIMA (OBRIGATÓRIO)${fotoWarn}\n${'─'.repeat(40)}\n\nUTILIZAR A FOTO ENVIADA COMO REFERÊNCIA PRINCIPAL DO ATLETA.\nPreservar identidade facial com máxima fidelidade possível.\n\nMANTER EXATAMENTE:\n• formato do rosto • cabelo e linha do cabelo\n• sobrancelhas • olhos • nariz e boca • sorriso\n• tom de pele • idade aparente\n• proporções e características físicas reais • expressão natural\n\nNÃO:\n• estilizar • cartoonizar • transformar em personagem digital\n• criar rosto genérico • aplicar filtros artificiais\n\nO atleta final deve ser imediatamente reconhecível como a criança da foto enviada.`;
+
+  const base_uniforme = `UNIFORME DO ATLETA${logo1Warn}\n${'─'.repeat(40)}\n\nVestir o atleta com o uniforme oficial: ${uniformeDesc}.\n${hasLogo1 ? 'Usar o escudo enviado como referência para a identidade visual do uniforme.' : 'ATENÇÃO: escudo Prospere não enviado — usar identidade visual baseada nas cores informadas.'}\nManter uniformidade com a identidade visual do ${clube}.`;
+
+  const base_paleta = `PALETA DE CORES\n${'─'.repeat(40)}\n\nPaleta escolhida: ${paleta}\n\nOpções aceitas:\n• azul e dourado • azul e prata • preto e dourado\n• grafite e prata • vermelho e preto • azul royal e branco\n• roxo neon • verde esmeralda premium\n• combinações cinematográficas exclusivas`;
+
+  const base_frase = `FRASE DE IMPACTO\n${'─'.repeat(40)}\n\n"${frase}"\n\nSempre criar frase inédita. Nunca repetir frases anteriores.\nRelacionada a: sonho • talento • futuro • determinação • evolução • paixão pelo futsal`;
+
+  // Cenário efetivo: combina o cenário do modo de intensidade com a variação sorteada (se houver)
+  const cenarioEfetivo = aleatorio ? `${int.cenario}. ${cenarioVar}` : int.cenario;
+  const iluminacaoEfetiva = aleatorio ? iluminacaoVar : null;
+  const layoutEfetivo = aleatorio ? layoutVar : null;
+  const tipografiaEfetiva = aleatorio ? tipografiaVar : null;
+
+  // Bloco de variação extra — só aparece quando "🎲 Variação" é usado.
+  // Reforça que identidade, rosto e uniforme NUNCA mudam, mesmo variando tudo o resto.
+  const blocoVariacaoExtra = aleatorio ? `\n\nVARIAÇÃO DE COMPOSIÇÃO (GERAÇÃO #${genCount}):\n• Layout: ${layoutEfetivo}\n${iluminacaoEfetiva ? '• Iluminação: ' + iluminacaoEfetiva + '\n' : ''}${tipografiaEfetiva ? '• Estilo de tipografia: ' + tipografiaEfetiva + '\n' : ''}\nIMPORTANTE: variar livremente composição, layout, iluminação e tipografia.\nNÃO alterar identidade do atleta, rosto, escudos ou uniforme — esses permanecem fixos.` : '';
+
+  // Negative prompt — lista do que evitar, adaptada à sintaxe da ferramenta escolhida
+  const itensEvitar = [
+    'rosto distorcido ou deformado',
+    'estilização tipo desenho/cartoon do atleta',
+    'rosto genérico que não corresponda à foto enviada',
+    'mãos ou dedos malformados',
+    'texto ilegível, embaralhado ou com erros de ortografia',
+    'marcas, logos ou patrocinadores de terceiros não solicitados',
+    'membros extras ou anatomia incorreta',
+    'baixa resolução, blur excessivo, ruído digital',
+    'watermark ou assinatura visível',
+    'proporções de corpo infantil incorretas para a idade informada'
+  ];
+  const base_negativo = ferramenta === 'Midjourney'
+    ? `EVITAR (NEGATIVE PROMPT)\n${'─'.repeat(40)}\n\nUsar como parâmetro --no no Midjourney:\n--no ${itensEvitar.join(', ')}\n\nReforço textual: a arte NÃO deve conter nenhum dos itens acima.`
+    : `EVITAR (NEGATIVE PROMPT)\n${'─'.repeat(40)}\n\nA arte NÃO deve conter:\n${itensEvitar.map(i => '• ' + i).join('\n')}\n\nPriorize sempre a fidelidade facial real do atleta sobre qualquer estilização.`;
+
+  // ── TEMPLATES POR TIPO ─────────────────────────────────────────────
+  let secs = {};
+
+  if(tipo === 'Card MVP'){
+    // Card MVP: foco no atleta individual, destaque máximo no nome, sem info de partida
+    secs = {
+      identidade: base_identidade + `\n\nTIPO DE ARTE: CARD MVP\nEste é um card de destaque individual — o atleta é o único protagonista.\nSem adversário. Sem placar. Apenas o craque em evidência máxima.`,
+      fidelidade: base_fidelidade,
+      conceito: `CONCEITO VISUAL — CARD MVP\n${'─'.repeat(40)}\n\nCard de premiação do Melhor em Campo. Arte de reconhecimento individual.\nVisual de troféu vivo — o atleta É o prêmio.\n\n${int.desc}\n\nReferências visuais:\n• Ballon d'Or official card • FIFA TOTY • UEFA POTY\n• Cards premium de coleção de atletas\n• Panini Prizm Prizmatic — cartão holográfico de craque\n\nEfeitos especiais:\n• Aura dourada ao redor do atleta\n• Estrelas ou partículas de luz\n• Background de gradiente premium (não arena)\n• Brilho e reflexo metálico no nome\n• Selo "MVP" ou "Melhor em Campo" em destaque\n\nVARIAÇÃO OBRIGATÓRIA — GERAÇÃO #${genCount}:\nComposição diferente a cada geração. Nunca repetir layout.${blocoVariacaoExtra}`,
+      uniforme: base_uniforme,
+      acao: `POSE DO ATLETA — CARD MVP\n${'─'.repeat(40)}\n\nPOSE: pose de craque — confiante, altivo, celebrando ou olhando para câmera\nÂNGULO: ${angulo}\n\nExpressão: sorriso de vitória ou olhar determinado de campeão\nO atleta ocupa 70-80% do card — close cinematográfico.\nFundo desfocado com efeito bokeh premium.\nSem outros jogadores em cena.`,
+      cenario: `CENÁRIO & ILUMINAÇÃO — CARD MVP\n${'─'.repeat(40)}\n\nBackground: gradiente premium ou ginásio desfocado ao fundo\nNão mostrar arena cheia — foco total no atleta\n\nILUMINAÇÃO:\nStudio lighting premium. Rim light dourado.\nHigh key lighting. Aura luminosa.\nGold particle effects. Lens flare sutil.${iluminacaoEfetiva ? '\nEstilo desta geração: ' + iluminacaoEfetiva + '.' : ''}`,
+      paleta: base_paleta,
+      tipografia: `TIPOGRAFIA — CARD MVP\n${'─'.repeat(40)}\n\nSELO MVP (destaque máximo):\n"MVP" ou "⭐ MELHOR EM CAMPO"\n→ Fonte display enorme. Dourado metálico. Centro superior do card.\n\nNOME DO ATLETA:\n${nome.toUpperCase()}\n→ Fonte gigante. Gold chrome. Reflexos. Elemento central do card.\n\nCLUBE & CATEGORIA:\n${clube.toUpperCase()} · ${categoria.toUpperCase()}\n→ Subtítulo elegante abaixo do nome.\n\nCAMPEONATO:\n${campeonato.toUpperCase()}\n→ Rodapé premium discreto.${tipografiaEfetiva ? '\n\nEstilo tipográfico desta geração: ' + tipografiaEfetiva + '.' : ''}`,
+      partida: `DADOS DO CARD MVP\n${'─'.repeat(40)}\n\n📅 ${data}\n🏆 ${campeonato.toUpperCase()}\n\nNão exibir adversário nem horário neste tipo de arte.\nFoco exclusivo na premiação individual.`,
+      frase: base_frase,
+      qualidade: `QUALIDADE FINAL — CARD MVP\n${'─'.repeat(40)}\n\nUltra realistic. Hyper realistic. Photorealistic.\n8K resolution. Premium collector card aesthetic.\nHolographic card effect. Gold foil typography.\nAward-winning sports card design.\nMaximum facial fidelity.\nLuxury sports memorabilia aesthetic.\n\nFORMATO: ${tipo} · Proporção quadrada ou 3:4${sufixoFerramenta()}`,
+      negativo: base_negativo,
+    };
+
+  } else if(tipo === 'Card Convocação'){
+    // Convocação: foco na chamada para a partida, tom de convocação militar/épico
+    secs = {
+      identidade: base_identidade + `\n\nTIPO DE ARTE: CARD DE CONVOCAÇÃO\nArte de chamada oficial para a batalha.\nTom: convocação épica, chamada para a guerra no campo.`,
+      fidelidade: base_fidelidade,
+      conceito: `CONCEITO VISUAL — CONVOCAÇÃO\n${'─'.repeat(40)}\n\nArte de convocação oficial. Tom militar esportivo. Chamada para a batalha.\n${int.desc}\n\nVisual semelhante a:\n• Convocações oficiais de seleções nacionais\n• Chamadas épicas da UEFA Champions League\n• Posters "We Are Coming" de clubes profissionais\n• Announcements de lineup da NBA\n\nElementos obrigatórios:\n• Texto "CONVOCADO" ou "É HORA DA BATALHA" em destaque\n• Escudos dos dois clubes lado a lado${logo2Warn}\n• Atmosfera de guerra esportiva — tensão máxima\n• Data e hora da partida em destaque visual\n\nVARIAÇÃO OBRIGATÓRIA — GERAÇÃO #${genCount}:\nLayout diferente a cada geração. Nunca repetir.${blocoVariacaoExtra}`,
+      uniforme: base_uniforme,
+      acao: `POSE DO ATLETA — CONVOCAÇÃO\n${'─'.repeat(40)}\n\nPOSE: atleta olhando para câmera com determinação — pose de guerreiro convocado\nÂNGULO: ${angulo}\n\nExpressão: ${int.expressao}\nPostura: ereta, confiante, pronto para a batalha\nO atleta pode aparecer saindo das sombras ou com luz de fundo dramática.`,
+      cenario: `CENÁRIO — CONVOCAÇÃO\n${'─'.repeat(40)}\n\nAmbiente: ${cenarioEfetivo}\nTensão de pré-jogo. Corredor do ginásio. Vestiário épico. Tunelo de entrada.\n\nEfeitos:\n• Fumaça dramática\n• Luz de holofote no atleta\n• Sombras contrastadas\n• Partículas de energia\n\nILUMINAÇÃO:\nDramatic backlight. Hard light. Chiaroscuro esportivo.\nVolumetric light beam. Arena spotlight.${iluminacaoEfetiva ? '\nEstilo desta geração: ' + iluminacaoEfetiva + '.' : ''}`,
+      paleta: base_paleta,
+      tipografia: `TIPOGRAFIA — CONVOCAÇÃO\n${'─'.repeat(40)}\n\nCABEÇALHO (destaque épico):\n"CONVOCADO" ou "É HORA" ou "CHAMADO PARA A BATALHA"\n→ Fonte bold display. Caixa alta. Impacto máximo.\n\nCONFRONTO:\n${clube.toUpperCase()} × ${adv.toUpperCase()}\n→ Fonte metálica grande. Escudos dos clubes ao lado.\n\nNOME DO ATLETA:\n${nome.toUpperCase()}\n→ Gold chrome. Reflexos metálicos.\n\nDATA & HORA:\n📅 ${data} · 🕒 ${hora}\n→ Destaque visual. Badge esportivo.\n\nLOCAL:\n📍 ${local}\n→ Rodapé clean.${tipografiaEfetiva ? '\n\nEstilo tipográfico desta geração: ' + tipografiaEfetiva + '.' : ''}`,
+      partida: `INFORMAÇÕES DA PARTIDA — CONVOCAÇÃO\n${'─'.repeat(40)}\n\nEste é o elemento CENTRAL desta arte:\n\n📅 DATA: ${data}\n🕒 HORÁRIO: ${hora}\n📍 LOCAL: ${local}\n\nVS: ${clube.toUpperCase()} × ${adv.toUpperCase()}\n\nDestaque máximo nas informações da partida.\nLayout de fixture card profissional.`,
+      frase: base_frase,
+      qualidade: `QUALIDADE FINAL — CONVOCAÇÃO\n${'─'.repeat(40)}\n\nUltra realistic. Hyper realistic. Cinematic.\n8K resolution. Official club announcement aesthetic.\nEpic sports poster. Championship announcement.\nMaximum facial fidelity. Dynamic composition.\nProfessional sports marketing.\n\nFORMATO: ${tipo} · Story 9:16 ou Feed 4:5${sufixoFerramenta()}`,
+      negativo: base_negativo,
+    };
+
+  } else if(tipo === 'Banner horizontal'){
+    // Banner: paisagem, dois clubes, foco no confronto
+    secs = {
+      identidade: base_identidade + `\n\nTIPO DE ARTE: BANNER HORIZONTAL\nComposição em formato wide/landscape.\nEspaço para os dois clubes e o atleta ao centro.`,
+      fidelidade: base_fidelidade,
+      conceito: `CONCEITO VISUAL — BANNER HORIZONTAL\n${'─'.repeat(40)}\n\nBanner de divulgação do confronto. Formato landscape/wide.\n${int.desc}\n\nComposição em três zonas:\n• ESQUERDA: identidade do ${clube.toUpperCase()} (escudo, cores)\n• CENTRO: atleta ${nome.toUpperCase()} em destaque máximo\n• DIREITA: identidade do ${adv.toUpperCase()} (escudo, cores adversário)\n\nVisual semelhante a:\n• Banners de confronto da ESPN / Sportv\n• Arte de matchup da NBA / UEFA\n• Headers de campeonato profissional\n\nVARIAÇÃO OBRIGATÓRIA — GERAÇÃO #${genCount}:\nComposição e layout diferentes a cada geração.${blocoVariacaoExtra}`,
+      uniforme: base_uniforme,
+      acao: `POSE DO ATLETA — BANNER\n${'─'.repeat(40)}\n\nPOSE: ação dinâmica ou pose de confronto — atleta ao centro do banner\nÂNGULO: eye level ou low angle dramático\n\nExpressão: ${int.expressao}\nO atleta é o elemento central entre os dois escudos.\nComposição simétrica com o atleta dominando o centro.`,
+      cenario: `CENÁRIO — BANNER HORIZONTAL\n${'─'.repeat(40)}\n\nAmbiente: ${cenarioEfetivo}\nFundo adequado para formato wide — arena panorâmica, gramado desfocado\n\nDivisão visual:\n• Metade esquerda nas cores do ${clube}\n• Metade direita nas cores do ${adv}\n• Atleta no centro sobrepondo os dois lados\n\nILUMINAÇÃO:\nCinematic wide lighting. Dual rim light (cada cor de um clube).\nHigh contrast. Panoramic sports photography.${iluminacaoEfetiva ? '\nEstilo desta geração: ' + iluminacaoEfetiva + '.' : ''}`,
+      paleta: base_paleta,
+      tipografia: `TIPOGRAFIA — BANNER\n${'─'.repeat(40)}\n\nCONFRONTO (elemento central superior):\n${clube.toUpperCase()} × ${adv.toUpperCase()}\n→ Grande. Metálico. Centralizado.\n\nNOME DO ATLETA:\n${nome.toUpperCase()}\n→ Abaixo do confronto. Gold chrome.\n\nDATA & LOCAL:\n📅 ${data} · 🕒 ${hora} · 📍 ${local}\n→ Rodapé centralizado.\n\nCAMPEONATO:\n${campeonato.toUpperCase()}\n→ Header superior discreto.\n\nFORMATO TEXTO: horizontal, alinhado ao centro da composição.${tipografiaEfetiva ? '\n\nEstilo tipográfico desta geração: ' + tipografiaEfetiva + '.' : ''}`,
+      partida: `INFORMAÇÕES DA PARTIDA — BANNER\n${'─'.repeat(40)}\n\n📅 ${data}\n🕒 ${hora}\n📍 ${local}\n\nExibir de forma clean no rodapé do banner.\nLayout de schedule card profissional — matchup fixture style.`,
+      frase: base_frase,
+      qualidade: `QUALIDADE FINAL — BANNER\n${'─'.repeat(40)}\n\nUltra realistic. Hyper realistic. Widescreen cinematic.\n8K resolution. Sports broadcast banner quality.\nProfessional matchup graphic. TV overlay aesthetic.\nMaximum facial fidelity.\n\nFORMATO: ${tipo} · Proporção 16:9 ou 3:1${sufixoFerramenta()}`,
+      negativo: base_negativo,
+    };
+
+  } else if(tipo === 'Feed Instagram 4:5'){
+    // Feed: quadrado/portrait, composição equilibrada, texto visível
+    secs = {
+      identidade: base_identidade + `\n\nTIPO DE ARTE: FEED INSTAGRAM 4:5\nComposição vertical equilibrada para feed do Instagram.\nVisualização em grade — harmonia com outros posts.`,
+      fidelidade: base_fidelidade,
+      conceito: `CONCEITO VISUAL — FEED 4:5\n${'─'.repeat(40)}\n\nPost para feed do Instagram. Proporção 4:5 (portrait).\n${int.desc}\n\nCaracterísticas do formato:\n• Composição equilibrada — nem muito vertical como Story\n• Texto legível em tamanho de feed\n• Impacto visual imediato — 1,5 segundos para chamar atenção\n• Thumb que convida ao clique\n\nVisual semelhante a:\n• Posts oficiais de clubes da Premier League / La Liga\n• Feed do Palmeiras, Flamengo, Manchester City\n• Marketing de atletas profissionais no Instagram\n\nVARIAÇÃO OBRIGATÓRIA — GERAÇÃO #${genCount}:\nLayout diferente a cada geração.${blocoVariacaoExtra}`,
+      uniforme: base_uniforme,
+      acao: `AÇÃO DO ATLETA — FEED\n${'─'.repeat(40)}\n\nAÇÃO: ${acao}\nÂNGULO: ${angulo}\n\nExpressão: ${int.expressao}\nAtleta ocupa 60-70% da composição.\nEspaço no topo para título/campeonato.\nEspaço no rodapé para informações da partida.`,
+      cenario: `CENÁRIO — FEED\n${'─'.repeat(40)}\n\nAmbiente: ${cenarioEfetivo}\nFundo que não compete com o atleta.\n\nILUMINAÇÃO:\nCinematic lighting. Professional sports photography.\nVolumetric light. HDR. Rim light premium.${iluminacaoEfetiva ? '\nEstilo desta geração: ' + iluminacaoEfetiva + '.' : ''}`,
+      paleta: base_paleta,
+      tipografia: `TIPOGRAFIA — FEED 4:5\n${'─'.repeat(40)}\n\nZONA SUPERIOR:\n${campeonato.toUpperCase()}\n→ Título clean. Legível em tamanho de feed.\n\nZONA CENTRAL (sobre o atleta):\n${nome.toUpperCase()}\n→ Gold chrome. Impacto visual. Tamanho médio-grande.\n\nZONA INFERIOR:\n${clube.toUpperCase()} × ${adv.toUpperCase()}\n📅 ${data} · 🕒 ${hora}\n→ Informações da partida. Fonte menor mas legível.\n\nEquilíbrio: título + atleta + info partida em harmonia visual.${tipografiaEfetiva ? '\n\nEstilo tipográfico desta geração: ' + tipografiaEfetiva + '.' : ''}`,
+      partida: `INFORMAÇÕES DA PARTIDA — FEED\n${'─'.repeat(40)}\n\n📅 ${data}\n🕒 ${hora}\n📍 ${local}\n\nExibir no rodapé do post — zona inferior reservada.\nBadge esportivo clean. Legível em visualização de feed.`,
+      frase: base_frase,
+      qualidade: `QUALIDADE FINAL — FEED 4:5\n${'─'.repeat(40)}\n\nUltra realistic. Hyper realistic. Photorealistic.\n8K resolution. Instagram feed optimized.\nProfessional sports post. High engagement visual.\nMaximum facial fidelity. Clean composition.\n\nFORMATO: ${tipo} · Proporção 4:5 (1080×1350px)${sufixoFerramenta()}`,
+      negativo: base_negativo,
+    };
+
+  } else {
+    // Story 9:16 (padrão) — formato original mantido
+    secs = {
+      identidade: base_identidade + `\n\nTIPO DE ARTE: INSTAGRAM STORY 9:16\nFormato vertical full-screen. Composição de cima a baixo.\nImpacto total em tela de smartphone.`,
+      fidelidade: base_fidelidade,
+      conceito: `CONCEITO VISUAL — STORY 9:16 — MODO: ${intensidade.toUpperCase()}\n${'─'.repeat(40)}\n\n${int.desc}\n\nCriar pôster esportivo premium. Ultra-realista. Cinematográfico. Moderno. Impactante.\nFormato Story: composição vertical, aproveitamento total da altura.\n\nVisual semelhante a:\n• Stories oficiais de clubes profissionais\n• Campanhas da Nike / Adidas para Instagram Stories\n• Marketing de atletas para mobile-first\n\nA arte deve parecer produzida por uma agência esportiva internacional.\n\nVARIAÇÃO OBRIGATÓRIA — GERAÇÃO #${genCount}:\nLayout diferente • Composição diferente • Posição diferente do atleta\nPROIBIDO repetir composições anteriores. Cada geração deve ser uma campanha inédita.${blocoVariacaoExtra}`,
+      uniforme: base_uniforme,
+      acao: `AÇÃO DO ATLETA & ÂNGULO DE CÂMERA\n${'─'.repeat(40)}\n\nAÇÃO: ${acao}\nÂNGULO: ${angulo}\n\nExpressão do atleta: ${int.expressao}\n\nO atleta deve ocupar grande parte da composição vertical.\nMovimento natural. Fotografia esportiva profissional.\nConfiança. Energia. Personalidade.\n\nAproveitamento da altura do Story:\n• Cabeça do atleta na zona superior\n• Corpo em ação no centro\n• Rodapé para informações`,
+      cenario: `CENÁRIO & ILUMINAÇÃO — STORY\n${'─'.repeat(40)}\n\nAmbiente: ${cenarioEfetivo}\n\nAdicionar:\n• torcida desfocada • refletores modernos • fumaça esportiva sutil\n• banners • luzes volumétricas • partículas de energia\n• profundidade cinematográfica\n\nILUMINAÇÃO:\nCinematic lighting. Volumetric lighting. HDR. Global illumination.\nHigh contrast. Premium sports lighting. Rim light. Atmospheric light.${iluminacaoEfetiva ? '\nEstilo desta geração: ' + iluminacaoEfetiva + '.' : ''}`,
+      paleta: base_paleta,
+      tipografia: `TIPOGRAFIA & TEXTOS — STORY\n${'─'.repeat(40)}\n\nTipografia esportiva premium. Moderna. Elegante. Impactante.\n${int.slogan}\n\nTÍTULO PRINCIPAL:\n${campeonato.toUpperCase()}\n→ Grande destaque visual. Zona superior do Story.\n\nNOME DO ATLETA:\n${nome.toUpperCase()}\n→ Fonte gigante. Metal dourado premium. Gold chrome. Reflexos metálicos.\n\nCATEGORIA:\nCATEGORIA ${categoria.toUpperCase()}\n→ Selo esportivo moderno.\n\nRODAPÉ:\n${clube.toUpperCase()} × ${adv.toUpperCase()}${logo2Warn}\n→ Tipografia metálica premium. Zona inferior do Story.${tipografiaEfetiva ? '\n\nEstilo tipográfico desta geração: ' + tipografiaEfetiva + '.' : ''}`,
+      partida: `INFORMAÇÕES DA PARTIDA\n${'─'.repeat(40)}\n\n📅 ${data}\n🕒 ${hora}\n📍 ${local}\n\nCard esportivo premium no rodapé do Story.\nLayout diferente a cada geração.`,
+      frase: base_frase,
+      qualidade: `QUALIDADE FINAL — STORY 9:16\n${'─'.repeat(40)}\n\nUltra realistic. Hyper realistic. Photorealistic.\n8K resolution. Award-winning sports photography.\nPremium sports poster. Elite athlete campaign.\nMobile-first vertical composition. Instagram Story optimized.\nMaximum facial fidelity. High-end graphic design.\nDynamic composition. Unique layout every generation.\nBrazilian professional futsal campaign.\nDepth of field. HDR. Volumetric lighting.\nGold chrome typography.\n\nFORMATO: ${tipo} · Proporção 9:16 (1080×1920px)${sufixoFerramenta()}`,
+      negativo: base_negativo,
+    };
+  }
+
+  // salva prompt anterior para comparação
+  const promptAtual = buildFullPrompt();
+  if(promptAtual.trim()) promptAnterior = promptAtual;
+
+  buildSections(secs);
+  const full = buildFullPrompt();
+  document.getElementById('rawOut').value = full;
+  const chars = full.length;
+  const tokens = Math.round(chars / 4);
+  document.getElementById('charCount').textContent = chars + ' chars';
+  const tc = document.getElementById('tokenCount');
+  if(tc) tc.textContent = '~' + tokens + ' tokens';
+  if(currentTab === 'preview') renderPreview();
+
+  checkWarnings();
+  mostrarToast(aleatorio ? '🎲 Variação aleatória gerada!' : '⚡ Prompt gerado com sucesso!', 'success');
+}
+
+function gerarAleatorio(){
+  gerar(true);
+}
+
+// ═══════════════════════════════════
+// TABS
+// ═══════════════════════════════════
+function switchTab(tab, btn){
+  currentTab = tab;
+  document.querySelectorAll('.otab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.getElementById('tab-secoes').style.display  = tab==='secoes'  ? 'block' : 'none';
+  document.getElementById('tab-preview').style.display = tab==='preview' ? 'block' : 'none';
+  document.getElementById('rawOut').style.display      = tab==='raw'     ? 'flex'  : 'none';
+  document.getElementById('tab-phistory').style.display= tab==='phistory'? 'block' : 'none';
+
+  const labels = {
+    secoes:   'Seções do prompt — clique para expandir e editar',
+    preview:  'Preview por seção — visão formatada do prompt',
+    raw:      'Prompt completo — pronto para copiar',
+    phistory: 'Histórico de prompts salvos'
+  };
+  document.getElementById('toolbarLabel').textContent = labels[tab] || '';
+
+  if(tab==='phistory') renderPromptHistory();
+  if(tab==='preview')  renderPreview();
+}
+
+// init tab display
+document.getElementById('tab-secoes').style.display  = 'block';
+document.getElementById('tab-preview').style.display = 'none';
+document.getElementById('rawOut').style.display      = 'none';
+document.getElementById('tab-phistory').style.display= 'none';
+
+// ═══════════════════════════════════
+// COPIAR
+// ═══════════════════════════════════
+function copiar(){
+  const val = buildFullPrompt();
+  if(!val.trim()){ mostrarToast('⚠️ Gere um prompt primeiro!','warn'); return; }
+  const temFoto = document.getElementById('box-atleta').classList.contains('has-img');
+  const msgCopiado = temFoto
+    ? '📋 Copiado! Lembre-se de anexar a foto do atleta junto.'
+    : '📋 Copiado! ⚠️ Você ainda não enviou a foto do atleta.';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(val)
+      .then(() => mostrarToast(msgCopiado, temFoto ? 'success' : 'warn'))
+      .catch(() => copiarFallback(val, msgCopiado, temFoto));
+  } else {
+    copiarFallback(val, msgCopiado, temFoto);
+  }
+}
+function copiarFallback(val, msgCopiado, temFoto){
+  const ta = document.createElement('textarea');
+  ta.value = val;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); mostrarToast(msgCopiado || '📋 Copiado!', temFoto===false ? 'warn' : 'success'); }
+  catch(e){ mostrarToast('⚠️ Não foi possível copiar','warn'); }
+  document.body.removeChild(ta);
+}
+
+// ═══════════════════════════════════
+// SALVAR PARTIDA
+// ═══════════════════════════════════
+function salvarPartida(){
+  const adv = v('adv');
+  if(!adv){ mostrarToast('⚠️ Preencha o adversário!','warn'); return; }
+  let h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
+  h.unshift({ adv, data:v('data'), hora:v('hora'), local:v('local'), ts:Date.now() });
+  if(h.length>30) h=h.slice(0,30);
+  localStorage.setItem('prospere_partidas', JSON.stringify(h));
+
+  // salvar prompt tb
+  const prompt = buildFullPrompt();
+  if(prompt.trim()){
+    let ph = JSON.parse(localStorage.getItem('prospere_prompts') || '[]');
+    ph.unshift({ adv, data:v('data'), prompt, secoes:{...secaoContent}, ts:Date.now(), gen:genCount });
+    if(ph.length>20) ph=ph.slice(0,20);
+    localStorage.setItem('prospere_prompts', JSON.stringify(ph));
+  }
+
+  renderHistory();
+  if(currentTab==='phistory') renderPromptHistory();
+  mostrarToast('💾 Partida e prompt salvos!','success');
+}
+
+function renderHistory(){
+  const h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
+  const el = document.getElementById('historyList');
+  if(!h.length){ el.innerHTML='<p style="font-size:12px;color:var(--muted)">Nenhuma partida salva ainda.</p>'; return; }
+  el.innerHTML = h.map(item => `
+    <div class="history-item">
+      <span onclick="carregarPartida(${item.ts})" style="flex:1;cursor:pointer">⚽ ${esc(item.adv)}</span>
+      <span style="font-size:10px;color:var(--muted)">${esc(item.data||'')}</span>
+      <button class="del" onclick="deletarPartida(${item.ts})">✕</button>
+    </div>`).join('');
+}
+
+function carregarPartida(ts){
+  const h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
+  const item = h.find(x => x.ts === ts); if(!item) return;
+  document.getElementById('adv').value = item.adv||'';
+  document.getElementById('data').value = item.data||'';
+  document.getElementById('hora').value = item.hora||'';
+  document.getElementById('local').value = item.local||'';
+  mostrarToast('📂 Partida carregada!','success');
+}
+
+function deletarPartida(ts){
+  let h = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
+  h = h.filter(x => x.ts !== ts);
+  localStorage.setItem('prospere_partidas', JSON.stringify(h));
+  renderHistory();
+}
+
+// ═══════════════════════════════════
+// HISTORICO DE PROMPTS
+// ═══════════════════════════════════
+function renderPromptHistory(){
+  const ph = JSON.parse(localStorage.getItem('prospere_prompts') || '[]');
+  const favs = JSON.parse(localStorage.getItem('prospere_favs') || '[]');
+  const tags = JSON.parse(localStorage.getItem('prospere_tags') || '{}');
+  const container = document.getElementById('tab-phistory');
+
+  if(!ph.length){
+    container.innerHTML = '<div class="ph-empty" id="phEmpty">Nenhum prompt salvo ainda.<br>Clique em 💾 Salvar após gerar.</div>';
+    return;
+  }
+
+  // favoritos primeiro
+  const sorted = [...ph].sort((a,b) => {
+    const fa = favs.includes(a.ts), fb = favs.includes(b.ts);
+    if(fa && !fb) return -1; if(!fa && fb) return 1; return b.ts - a.ts;
+  });
+
+  const TAG_DEFS = {
+    usado: { icon:'✅', label:'Usado' },
+    bom:   { icon:'👍', label:'Resultado bom' },
+    ruim:  { icon:'👎', label:'Resultado ruim' }
+  };
+
+  const items = sorted.map(item => {
+    const preview = esc(item.prompt.substring(0,80).replace(/\n/g,' '));
+    const date = new Date(item.ts).toLocaleDateString('pt-BR');
+    const isFav = favs.includes(item.ts);
+    const favBadge = isFav ? '<span class="ph-fav-badge">⭐ Favorito</span>' : '';
+    const itemTags = tags[item.ts] || [];
+
+    const tagButtons = Object.keys(TAG_DEFS).map(key => {
+      const ativo = itemTags.includes(key);
+      return `<button class="ph-tag-btn ${ativo?'active tag-'+key:''}" onclick="event.stopPropagation();toggleTag(${item.ts},'${key}')" title="${TAG_DEFS[key].label}">${TAG_DEFS[key].icon}</button>`;
+    }).join('');
+
+    return `<div class="phist-item" onclick="carregarPrompt(${item.ts})">
+      <button class="phist-fav ${isFav?'fav':''}" onclick="event.stopPropagation();toggleFav(${item.ts})" title="${isFav?'Remover favorito':'Adicionar favorito'}">${isFav?'⭐':'☆'}</button>
+      <div class="ph-header">
+        <span class="ph-title">⚽ ${esc(item.adv||'Sem adversário')}${favBadge}</span>
+        <span class="ph-meta">${esc(item.data||'')} · ${date} · Geração #${item.gen||'?'}</span>
+      </div>
+      <div class="ph-preview">${preview}...</div>
+      <div class="ph-tags">${tagButtons}</div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `<div style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:11px;color:var(--muted);font-weight:700">${ph.length} prompts · ${favs.length} favoritos</span>
+    <button class="btn btn-sec" style="padding:5px 10px;font-size:10px" onclick="limparPrompts()">🗑️ Limpar tudo</button>
+  </div>${items}`;
+}
+
+function toggleTag(ts, tagKey){
+  let tags = JSON.parse(localStorage.getItem('prospere_tags') || '{}');
+  if(!tags[ts]) tags[ts] = [];
+  // bom e ruim são mutuamente exclusivos; usado é independente
+  if(tagKey === 'bom' || tagKey === 'ruim'){
+    const oposto = tagKey === 'bom' ? 'ruim' : 'bom';
+    tags[ts] = tags[ts].filter(t => t !== oposto);
+  }
+  if(tags[ts].includes(tagKey)) tags[ts] = tags[ts].filter(t => t !== tagKey);
+  else tags[ts].push(tagKey);
+  if(!tags[ts].length) delete tags[ts];
+  localStorage.setItem('prospere_tags', JSON.stringify(tags));
+  renderPromptHistory();
+}
+
+function toggleFav(ts){
+  let favs = JSON.parse(localStorage.getItem('prospere_favs') || '[]');
+  if(favs.includes(ts)){ favs = favs.filter(x => x !== ts); mostrarToast('☆ Removido dos favoritos',''); }
+  else { favs.push(ts); mostrarToast('⭐ Adicionado aos favoritos!','success'); }
+  localStorage.setItem('prospere_favs', JSON.stringify(favs));
+  renderPromptHistory();
+}
+
+function carregarPrompt(ts){
+  const ph = JSON.parse(localStorage.getItem('prospere_prompts') || '[]');
+  const item = ph.find(x => x.ts === ts); if(!item) return;
+  document.getElementById('adv').value = item.adv||'';
+  document.getElementById('data').value = item.data||'';
+  if(item.secoes){
+    buildSections(item.secoes);
+  } else {
+    const fakeSecs = {};
+    SECOES.forEach(s => { fakeSecs[s.id] = ''; });
+    fakeSecs['conceito'] = item.prompt;
+    buildSections(fakeSecs);
+  }
+  document.getElementById('rawOut').value = item.prompt;
+  const chars = item.prompt.length;
+  document.getElementById('charCount').textContent = chars + ' chars';
+  const tc = document.getElementById('tokenCount');
+  if(tc) tc.textContent = '~' + Math.round(chars/4) + ' tokens';
+  mostrarToast('📂 Prompt carregado!','success');
+  switchTab('secoes', document.querySelectorAll('.otab')[0]);
+}
+
+function limparPrompts(){
+  if(confirm('Limpar todo o histórico de prompts?')){
+    localStorage.removeItem('prospere_prompts');
+    renderPromptHistory();
+  }
+}
+
+// ═══════════════════════════════════
+// PDF
+// ═══════════════════════════════════
+function exportarPDF(){
+  const val = buildFullPrompt();
+  if(!val.trim()){ mostrarToast('⚠️ Gere um prompt primeiro!','warn'); return; }
+  const w = window.open('','_blank');
+  const title = `Prompt Master — ${v('adv')||'Arte'} — ${v('data')||''}`;
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+<style>body{font-family:monospace;background:#fff;color:#111;padding:40px;max-width:820px;margin:auto;font-size:13px;line-height:1.7}
+pre{white-space:pre-wrap;word-break:break-word}
+h2{font-family:Arial;font-size:18px;margin-bottom:6px;color:#1d6cff}
+.meta{font-size:12px;color:#888;margin-bottom:24px}
+hr{border:none;border-top:1px solid #eee;margin:20px 0}
+</style></head><body>
+<h2>⚽ Prompt Master Prospere V6</h2>
+<p class="meta">Atleta: ${v('nome')} · Adversário: ${v('adv')||'-'} · Data: ${v('data')||'-'} · Geração #${genCount}</p>
+<hr>
+<pre>${val.replace(/</g,'&lt;')}</pre>
+</body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),300);
+}
+
+// ═══════════════════════════════════
+// UTILS
+// ═══════════════════════════════════
+function v(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+// Escapa HTML para prevenir XSS em template literals
+function esc(str){ return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// AUTO-SAVE rascunho — salva os campos do formulário no localStorage em tempo real
+const DRAFT_FIELDS = ['nome','categoria','clube','campeonato','uniforme1','uniforme2','adv','data','hora','local','fraseCustom'];
+function saveDraft(){
+  const draft = {};
+  DRAFT_FIELDS.forEach(id => { const el = document.getElementById(id); if(el) draft[id] = el.value; });
+  draft._intensidade = intensidade;
+  draft._frase = fraseSelecionada;
+  draft._paleta = getToggle('paletaGroup');
+  draft._acao = getToggle('acaoGroup');
+  draft._angulo = getToggle('anguloGroup');
+  draft._tipo = getToggle('tipoGroup');
+  localStorage.setItem('prospere_draft', JSON.stringify(draft));
+}
+function restoreDraft(){
+  try {
+    const raw = localStorage.getItem('prospere_draft'); if(!raw) return;
+    const draft = JSON.parse(raw);
+    DRAFT_FIELDS.forEach(id => { const el = document.getElementById(id); if(el && draft[id] !== undefined) el.value = draft[id]; });
+    if(draft._intensidade){ const btn = document.querySelector(`.int-btn[data-val="${draft._intensidade}"]`); if(btn) setIntensidade(btn); }
+    if(draft._frase){ fraseSelecionada = draft._frase; document.querySelectorAll('.frase-chip').forEach(c => { if(c.textContent === draft._frase){ c.classList.add('sel'); } else { c.classList.remove('sel'); } }); }
+    if(draft._paleta) setToggle('paletaGroup', draft._paleta);
+    if(draft._acao) setToggle('acaoGroup', draft._acao);
+    if(draft._angulo) setToggle('anguloGroup', draft._angulo);
+    if(draft._tipo) setToggle('tipoGroup', draft._tipo);
+  } catch(e){ /* ignora erros de restore */ }
+}
+// debounce para não salvar a cada tecla
+let draftTimer;
+function debouncedSaveDraft(){ clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 800); }
+DRAFT_FIELDS.forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('input', debouncedSaveDraft); });
+
+// ═══════════════════════════════════
+// PREVIEW TAB
+// ═══════════════════════════════════
+function renderPreview(){
+  const container = document.getElementById('tab-preview');
+  if(!Object.keys(secaoContent).length){ container.innerHTML='<div class="ph-empty">Gere um prompt primeiro.</div>'; return; }
+  const cards = SECOES.map(s => {
+    const content = secaoContent[s.id] || '';
+    if(!content.trim()) return '';
+    const isModified = document.getElementById('psec-'+s.id)?.classList.contains('modified');
+    const badge = isModified ? '<span style="font-size:9px;background:var(--gold-light);color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:1px 6px;font-weight:700;margin-left:6px">✏️ Editada</span>' : '';
+    return `<div class="preview-card">
+      <div class="preview-card-header">
+        <span class="preview-card-title">${s.title}${badge}</span>
+        <span style="font-size:10px;color:var(--hint);margin-left:auto">${content.length} chars</span>
+      </div>
+      <div class="preview-card-body">${esc(content)}</div>
+    </div>`;
+  }).join('');
+  container.innerHTML = cards || '<div class="ph-empty">Nenhum conteúdo para exibir.</div>';
+}
+
+// ═══════════════════════════════════
+// DARK MODE
+// ═══════════════════════════════════
+function toggleDark(){
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+  document.getElementById('darkToggle').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('prospere_theme', isDark ? 'light' : 'dark');
+}
+// restaura tema salvo
+(function(){
+  const t = localStorage.getItem('prospere_theme');
+  if(t === 'dark'){ document.documentElement.setAttribute('data-theme','dark'); document.getElementById('darkToggle').textContent='☀️'; }
+})();
+
+// ═══════════════════════════════════
+// COMPARAÇÃO DE GERAÇÕES
+// ═══════════════════════════════════
+function abrirComparacao(){
+  const atual = buildFullPrompt();
+  if(!atual.trim()){ mostrarToast('⚠️ Gere um prompt primeiro!','warn'); return; }
+  document.getElementById('compareLeft').value  = promptAnterior || '(Nenhuma geração anterior nesta sessão)';
+  document.getElementById('compareRight').value = atual;
+  document.getElementById('modalComparacao').classList.add('open');
+}
+function fecharComparacao(){
+  document.getElementById('modalComparacao').classList.remove('open');
+}
+function usarAnterior(){
+  if(!promptAnterior){ mostrarToast('⚠️ Nenhuma geração anterior disponível','warn'); return; }
+  // restaura prompt anterior no rawOut e seções
+  document.getElementById('rawOut').value = promptAnterior;
+  const fakeSecs = {};
+  SECOES.forEach(s => { fakeSecs[s.id] = ''; });
+  fakeSecs['conceito'] = promptAnterior;
+  buildSections(fakeSecs);
+  fecharComparacao();
+  mostrarToast('↩️ Geração anterior restaurada!','success');
+}
+// fechar modal ao clicar fora
+document.getElementById('modalComparacao').addEventListener('click', e => {
+  if(e.target === document.getElementById('modalComparacao')) fecharComparacao();
+});
+
+// ═══════════════════════════════════
+// LIMPAR RASCUNHO
+// ═══════════════════════════════════
+function limparRascunho(){
+  if(!confirm('Limpar todos os campos e o rascunho salvo?')) return;
+  const DRAFT_FIELDS_LIST = ['nome','categoria','clube','campeonato','uniforme1','uniforme2','adv','data','hora','local','fraseCustom'];
+  DRAFT_FIELDS_LIST.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  // restaura defaults
+  document.getElementById('nome').value = 'Kaio Genaro';
+  document.getElementById('categoria').value = 'Sub-8';
+  document.getElementById('clube').value = 'Prospere Hortolândia Futsal';
+  document.getElementById('campeonato').value = 'Campeonato Paulista A1 de Futsal 2026';
+  localStorage.removeItem('prospere_draft');
+
+  // restaura toggles para o padrão (🎲 IA escolhe / primeira opção)
+  setToggle('paletaGroup', 'IA escolhe automaticamente a paleta mais impactante');
+  setToggle('acaoGroup', 'IA escolhe automaticamente');
+  setToggle('anguloGroup', 'IA varia automaticamente o ângulo');
+  setToggle('tipoGroup', 'Instagram Story 9:16');
+
+  // restaura intensidade padrão (Confronto)
+  const btnConfronto = document.querySelector('.int-btn[data-val="Confronto"]');
+  if(btnConfronto) setIntensidade(btnConfronto);
+
+  // restaura frase padrão
+  document.querySelectorAll('.frase-chip').forEach((c,i) => { c.classList.toggle('sel', i===0); });
+  fraseSelecionada = '🎲 IA cria frase inédita automaticamente';
+
+  mostrarToast('🧹 Rascunho limpo!','success');
+}
+
+// ═══════════════════════════════════
+// ATALHOS DE TECLADO
+// ═══════════════════════════════════
+document.addEventListener('keydown', e => {
+  const ctrl = e.ctrlKey || e.metaKey;
+  if(!ctrl) return;
+  // não interferir em inputs ou textareas — evita perder edições manuais em seções
+  const tag = document.activeElement.tagName;
+  const isEditable = tag === 'INPUT' || tag === 'TEXTAREA';
+  if(e.key === 'Enter'){
+    if(isEditable) return; // permite nova linha normal dentro de textareas
+    e.preventDefault(); gerar();
+  }
+  else if(e.key === 's'){ e.preventDefault(); salvarPartida(); }
+  else if(e.key === 'c' && !isEditable){ e.preventDefault(); copiar(); }
+  // Ctrl+C dentro de input/textarea segue o comportamento nativo do navegador (copiar seleção)
+});
+
+// ═══════════════════════════════════
+// VALIDAÇÃO ANTES DE GERAR
+// ═══════════════════════════════════
+function validarCampos(){
+  const problemas = [];
+  if(!v('nome')) problemas.push('nome do atleta');
+  if(!v('adv')) problemas.push('adversário');
+  if(!v('data')) problemas.push('data da partida');
+  if(!document.getElementById('box-atleta').classList.contains('has-img')) problemas.push('foto do atleta');
+  return problemas;
+}
+
+// ═══════════════════════════════════
+// AUTOCOMPLETE DE ADVERSÁRIO
+// ═══════════════════════════════════
+function registrarAdversario(nomeAdv){
+  if(!nomeAdv || !nomeAdv.trim()) return;
+  let lista = JSON.parse(localStorage.getItem('prospere_advs') || '[]');
+  if(!lista.includes(nomeAdv)){
+    lista.push(nomeAdv);
+    if(lista.length > 50) lista = lista.slice(-50);
+    localStorage.setItem('prospere_advs', JSON.stringify(lista));
+    atualizarAdvList();
+  }
+}
+function atualizarAdvList(){
+  const lista = JSON.parse(localStorage.getItem('prospere_advs') || '[]');
+  const dl = document.getElementById('advList');
+  dl.innerHTML = lista.map(a => `<option value="${esc(a)}">`).join('');
+}
+
+// ═══════════════════════════════════
+// EXPORTAR / IMPORTAR CONFIGURAÇÃO
+// ═══════════════════════════════════
+function exportarConfig(){
+  const config = {
+    nome: v('nome'), categoria: v('categoria'), clube: v('clube'), campeonato: v('campeonato'),
+    uniforme1: v('uniforme1'), uniforme2: v('uniforme2'),
+    paleta: getToggle('paletaGroup'), tipo: getToggle('tipoGroup'),
+    exportadoEm: new Date().toISOString(), versao: 'V6'
+  };
+  const blob = new Blob([JSON.stringify(config, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `prospere-config-${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  mostrarToast('⬇️ Config exportada!','success');
+}
+function importarConfig(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const config = JSON.parse(e.target.result);
+      if(config.nome) document.getElementById('nome').value = config.nome;
+      if(config.categoria) document.getElementById('categoria').value = config.categoria;
+      if(config.clube) document.getElementById('clube').value = config.clube;
+      if(config.campeonato) document.getElementById('campeonato').value = config.campeonato;
+      if(config.uniforme1) document.getElementById('uniforme1').value = config.uniforme1;
+      if(config.uniforme2) document.getElementById('uniforme2').value = config.uniforme2;
+      if(config.paleta) setToggle('paletaGroup', config.paleta);
+      if(config.tipo) setToggle('tipoGroup', config.tipo);
+      saveDraft();
+      mostrarToast('⬆️ Config importada com sucesso!','success');
+    } catch(err){
+      mostrarToast('⚠️ Arquivo inválido — não foi possível importar','warn');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ═══════════════════════════════════
+// COMPARTILHAR PROMPT VIA LINK
+// ═══════════════════════════════════
+function compartilharLink(){
+  const full = buildFullPrompt();
+  if(!full.trim()){ mostrarToast('⚠️ Gere um prompt primeiro!','warn'); return; }
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(full)));
+    const url = `${location.origin}${location.pathname}?p=${encoded}`;
+    if(url.length > 8000){
+      mostrarToast('⚠️ Prompt muito longo para link — use Copiar ou Exportar PDF','warn');
+      return;
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url)
+        .then(() => mostrarToast('🔗 Link copiado! Cole para compartilhar.','success'))
+        .catch(() => mostrarToast('⚠️ Não foi possível copiar o link','warn'));
+    }
+  } catch(e){
+    mostrarToast('⚠️ Erro ao gerar link de compartilhamento','warn');
+  }
+}
+function carregarPromptDaURL(){
+  const params = new URLSearchParams(location.search);
+  const p = params.get('p');
+  if(!p) return;
+  try {
+    const decoded = decodeURIComponent(escape(atob(p)));
+    document.getElementById('rawOut').value = decoded;
+    const fakeSecs = {};
+    SECOES.forEach(s => { fakeSecs[s.id] = ''; });
+    fakeSecs['conceito'] = decoded;
+    buildSections(fakeSecs);
+    switchTab('raw', document.querySelectorAll('.otab')[2]);
+    mostrarToast('🔗 Prompt carregado do link compartilhado!','success');
+  } catch(e){ /* link inválido, ignora silenciosamente */ }
+}
+
+// ═══════════════════════════════════
+// BANCO DE FRASES CUSTOMIZADAS
+// ═══════════════════════════════════
+function adicionarFraseBanco(){
+  const txt = v('fraseCustom');
+  if(!txt){ mostrarToast('⚠️ Digite uma frase antes de salvar','warn'); return; }
+  let banco = JSON.parse(localStorage.getItem('prospere_frases') || '[]');
+  if(banco.includes(txt)){ mostrarToast('⚠️ Essa frase já está salva','warn'); return; }
+  banco.push(txt);
+  localStorage.setItem('prospere_frases', JSON.stringify(banco));
+  renderFrasesCustom();
+  mostrarToast('➕ Frase adicionada ao banco!','success');
+}
+function renderFrasesCustom(){
+  const banco = JSON.parse(localStorage.getItem('prospere_frases') || '[]');
+  const container = document.getElementById('frasesCustomList');
+  container.innerHTML = banco.map((f,i) => `
+    <div class="frase-chip" style="display:flex;justify-content:space-between;align-items:center;gap:6px" data-custom="1">
+      <span onclick="selecionarFraseCustom('${esc(f).replace(/'/g,"\\'")}', this.parentElement)" style="flex:1;cursor:pointer">${esc(f)}</span>
+      <span onclick="removerFraseBanco(${i})" style="cursor:pointer;color:var(--muted);font-weight:900;padding:0 4px">✕</span>
+    </div>`).join('');
+}
+function selecionarFraseCustom(texto, el){
+  document.querySelectorAll('.frase-chip').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  fraseSelecionada = texto;
+  document.getElementById('fraseCustom').value = '';
+}
+function removerFraseBanco(i){
+  let banco = JSON.parse(localStorage.getItem('prospere_frases') || '[]');
+  banco.splice(i,1);
+  localStorage.setItem('prospere_frases', JSON.stringify(banco));
+  renderFrasesCustom();
+}
+
+// ═══════════════════════════════════
+// DASHBOARD DE ESTATÍSTICAS
+// ═══════════════════════════════════
+function abrirDashboard(){
+  const ph = JSON.parse(localStorage.getItem('prospere_prompts') || '[]');
+  const favs = JSON.parse(localStorage.getItem('prospere_favs') || '[]');
+  const partidas = JSON.parse(localStorage.getItem('prospere_partidas') || '[]');
+
+  const totalPrompts = ph.length;
+  const totalPartidas = partidas.length;
+  const totalFavs = favs.length;
+
+  // adversário mais enfrentado
+  const advCount = {};
+  ph.forEach(p => { if(p.adv){ advCount[p.adv] = (advCount[p.adv]||0)+1; } });
+  const advRanking = Object.entries(advCount).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+  // tipo de arte mais usado (extraído do campo secoes.identidade, que contém "TIPO DE ARTE: X")
+  const tipoCount = {};
+  ph.forEach(p => {
+    const txt = (p.secoes && p.secoes.identidade) || '';
+    const match = txt.match(/TIPO DE ARTE:\s*([^\n]+)/);
+    const tipo = match ? match[1].trim() : 'Story 9:16 (padrão)';
+    tipoCount[tipo] = (tipoCount[tipo]||0)+1;
+  });
+  const tipoRanking = Object.entries(tipoCount).sort((a,b) => b[1]-a[1]);
+
+  const maxAdv = advRanking.length ? advRanking[0][1] : 1;
+  const maxTipo = tipoRanking.length ? tipoRanking[0][1] : 1;
+
+  const advBars = advRanking.length ? advRanking.map(([nome,count]) => `
+    <div class="dash-bar-row">
+      <span class="dash-bar-label" title="${esc(nome)}">${esc(nome)}</span>
+      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.max(12,(count/maxAdv)*100)}%">${count}</div></div>
+    </div>`).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhum dado ainda.</p>';
+
+  const tipoBars = tipoRanking.length ? tipoRanking.map(([nome,count]) => `
+    <div class="dash-bar-row">
+      <span class="dash-bar-label" title="${esc(nome)}">${esc(nome)}</span>
+      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.max(12,(count/maxTipo)*100)}%">${count}</div></div>
+    </div>`).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhum dado ainda.</p>';
+
+  document.getElementById('dashboardContent').innerHTML = `
+    <div class="dash-grid">
+      <div class="dash-stat"><div class="dash-stat-num">${totalPrompts}</div><div class="dash-stat-label">Prompts gerados</div></div>
+      <div class="dash-stat"><div class="dash-stat-num">${totalPartidas}</div><div class="dash-stat-label">Partidas salvas</div></div>
+      <div class="dash-stat"><div class="dash-stat-num">${totalFavs}</div><div class="dash-stat-label">Favoritos</div></div>
+      <div class="dash-stat"><div class="dash-stat-num">${genCount}</div><div class="dash-stat-label">Gerações nesta sessão</div></div>
+    </div>
+    <div class="dash-section-title">⚔️ Adversários mais enfrentados</div>
+    ${advBars}
+    <div class="dash-section-title">🎨 Tipos de arte mais usados</div>
+    ${tipoBars}
+  `;
+  document.getElementById('modalDashboard').classList.add('open');
+}
+function fecharDashboard(){
+  document.getElementById('modalDashboard').classList.remove('open');
+}
+document.getElementById('modalDashboard').addEventListener('click', e => {
+  if(e.target === document.getElementById('modalDashboard')) fecharDashboard();
+});
+
+function mostrarToast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  const duracao = msg.length > 40 ? 4000 : 2500;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), duracao);
+}
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+renderHistory();
+atualizarAdvList();
+renderFrasesCustom();
+restoreDraft();
+carregarPromptDaURL();
+gerar();
+</script>
+</body>
+</html>
