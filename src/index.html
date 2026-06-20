@@ -59,6 +59,13 @@
   <!-- ATLETA -->
   <div class="section">
     <div class="sec-title">Atleta & Clube</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+      <select id="profileSelect" style="flex:1;margin-bottom:0" onchange="carregarPerfil(this.value)">
+        <option value="">— Perfil salvo —</option>
+      </select>
+      <button class="btn btn-sec" style="padding:8px 10px;font-size:11px;white-space:nowrap" onclick="salvarPerfil()" title="Salvar perfil atual">💾 Salvar</button>
+      <button class="btn btn-sec" style="padding:8px 10px;font-size:11px" onclick="deletarPerfil()" title="Deletar perfil selecionado">🗑️</button>
+    </div>
     <div class="row2">
       <div><label>Nome do atleta</label><input type="text" id="nome" value="Kaio Genaro"></div>
       <div><label>Categoria</label><input type="text" id="categoria" value="Sub-8"></div>
@@ -221,6 +228,7 @@
     <span class="token-count" id="tokenCount">~0 tokens</span>
     <span class="shortcuts-hint">
       <span><span class="kbd">Ctrl+↵</span> Gerar</span>
+      <span><span class="kbd">Ctrl+⇧+↵</span> Variação</span>
       <span><span class="kbd">Ctrl+C</span> Copiar</span>
       <span><span class="kbd">Ctrl+S</span> Salvar</span>
     </span>
@@ -253,6 +261,7 @@
     <button class="btn btn-sec" onclick="abrirComparacao()" title="Comparar geração atual com anterior">⇄ Comparar</button>
     <button class="btn btn-sec" onclick="limparRascunho()" title="Limpar todos os campos">🧹 Limpar</button>
     <button class="btn btn-gold" onclick="exportarPDF()">📄 PDF</button>
+    <button class="btn btn-gold" onclick="exportarKit()">📦 Kit</button>
 
     <div class="lock-panel" id="lockPanel">
       <div class="lock-panel-title">Travar categorias na Variação 🎲</div>

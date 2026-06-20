@@ -301,6 +301,13 @@ select option{background:#fff}
   <!-- ATLETA -->
   <div class="section">
     <div class="sec-title">Atleta & Clube</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+      <select id="profileSelect" style="flex:1;margin-bottom:0" onchange="carregarPerfil(this.value)">
+        <option value="">— Perfil salvo —</option>
+      </select>
+      <button class="btn btn-sec" style="padding:8px 10px;font-size:11px;white-space:nowrap" onclick="salvarPerfil()" title="Salvar perfil atual">💾 Salvar</button>
+      <button class="btn btn-sec" style="padding:8px 10px;font-size:11px" onclick="deletarPerfil()" title="Deletar perfil selecionado">🗑️</button>
+    </div>
     <div class="row2">
       <div><label>Nome do atleta</label><input type="text" id="nome" value="Kaio Genaro"></div>
       <div><label>Categoria</label><input type="text" id="categoria" value="Sub-8"></div>
@@ -463,6 +470,7 @@ select option{background:#fff}
     <span class="token-count" id="tokenCount">~0 tokens</span>
     <span class="shortcuts-hint">
       <span><span class="kbd">Ctrl+↵</span> Gerar</span>
+      <span><span class="kbd">Ctrl+⇧+↵</span> Variação</span>
       <span><span class="kbd">Ctrl+C</span> Copiar</span>
       <span><span class="kbd">Ctrl+S</span> Salvar</span>
     </span>
@@ -495,6 +503,7 @@ select option{background:#fff}
     <button class="btn btn-sec" onclick="abrirComparacao()" title="Comparar geração atual com anterior">⇄ Comparar</button>
     <button class="btn btn-sec" onclick="limparRascunho()" title="Limpar todos os campos">🧹 Limpar</button>
     <button class="btn btn-gold" onclick="exportarPDF()">📄 PDF</button>
+    <button class="btn btn-gold" onclick="exportarKit()">📦 Kit</button>
 
     <div class="lock-panel" id="lockPanel">
       <div class="lock-panel-title">Travar categorias na Variação 🎲</div>
@@ -1470,7 +1479,9 @@ document.addEventListener('keydown', e => {
   const isEditable = tag === 'INPUT' || tag === 'TEXTAREA';
   if(e.key === 'Enter'){
     if(isEditable) return; // permite nova linha normal dentro de textareas
-    e.preventDefault(); gerar();
+    e.preventDefault();
+    if(e.shiftKey) gerarAleatorio();
+    else gerar();
   }
   else if(e.key === 's'){ e.preventDefault(); salvarPartida(); }
   else if(e.key === 'c' && !isEditable){ e.preventDefault(); copiar(); }
@@ -1635,6 +1646,165 @@ function removerFraseBanco(i){
 }
 
 // ═══════════════════════════════════
+// PERFIS DE ATLETA
+// ═══════════════════════════════════
+function renderProfileSelector(){
+  const profiles = JSON.parse(localStorage.getItem('prospere_profiles') || '[]');
+  const sel = document.getElementById('profileSelect');
+  if(!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Perfil salvo —</option>' +
+    profiles.map(p => `<option value="${p.id}"${p.id===current?' selected':''}>${esc(p.label)}</option>`).join('');
+}
+
+function salvarPerfil(){
+  const nome = v('nome');
+  if(!nome){ mostrarToast('⚠️ Preencha o nome do atleta','warn'); return; }
+  const profiles = JSON.parse(localStorage.getItem('prospere_profiles') || '[]');
+  const id = Date.now().toString();
+  const label = nome + (v('clube') ? ' · ' + v('clube') : '');
+  profiles.unshift({ id, label,
+    nome: v('nome'), categoria: v('categoria'), clube: v('clube'),
+    campeonato: v('campeonato'), uniforme1: v('uniforme1'), uniforme2: v('uniforme2')
+  });
+  if(profiles.length > 20) profiles.length = 20;
+  localStorage.setItem('prospere_profiles', JSON.stringify(profiles));
+  renderProfileSelector();
+  document.getElementById('profileSelect').value = id;
+  mostrarToast('💾 Perfil salvo!','success');
+}
+
+function carregarPerfil(id){
+  if(!id) return;
+  const profiles = JSON.parse(localStorage.getItem('prospere_profiles') || '[]');
+  const p = profiles.find(x => x.id === id);
+  if(!p) return;
+  if(p.nome)       document.getElementById('nome').value       = p.nome;
+  if(p.categoria)  document.getElementById('categoria').value  = p.categoria;
+  if(p.clube)      document.getElementById('clube').value      = p.clube;
+  if(p.campeonato) document.getElementById('campeonato').value = p.campeonato;
+  document.getElementById('uniforme1').value = p.uniforme1 || '';
+  document.getElementById('uniforme2').value = p.uniforme2 || '';
+  saveDraft();
+  mostrarToast('📂 Perfil carregado!','success');
+}
+
+function deletarPerfil(){
+  const sel = document.getElementById('profileSelect');
+  const id = sel.value;
+  if(!id){ mostrarToast('⚠️ Selecione um perfil para deletar','warn'); return; }
+  if(!confirm('Deletar este perfil?')) return;
+  let profiles = JSON.parse(localStorage.getItem('prospere_profiles') || '[]');
+  profiles = profiles.filter(p => p.id !== id);
+  localStorage.setItem('prospere_profiles', JSON.stringify(profiles));
+  renderProfileSelector();
+  mostrarToast('🗑️ Perfil deletado','');
+}
+
+// ═══════════════════════════════════
+// ZIP / EXPORTAR KIT
+// ═══════════════════════════════════
+function crc32(data){
+  if(!crc32._t){
+    crc32._t = new Uint32Array(256);
+    for(let i=0;i<256;i++){
+      let c=i;
+      for(let j=0;j<8;j++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
+      crc32._t[i]=c;
+    }
+  }
+  let crc=0xFFFFFFFF;
+  for(let i=0;i<data.length;i++) crc=crc32._t[(crc^data[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+
+function buildZip(files){
+  const enc = new TextEncoder();
+  let offset = 0;
+  const locals = [];
+  const centrals = [];
+
+  for(const file of files){
+    const name = enc.encode(file.name);
+    const data = file.data;
+    const crc = crc32(data);
+    const sz = data.length;
+    const local = new Uint8Array(30 + name.length + sz);
+    const lv = new DataView(local.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true);
+    lv.setUint16(6,0,true);          lv.setUint16(8,0,true);
+    lv.setUint16(10,0,true);         lv.setUint16(12,0,true);
+    lv.setUint32(14,crc,true);       lv.setUint32(18,sz,true);
+    lv.setUint32(22,sz,true);        lv.setUint16(26,name.length,true);
+    lv.setUint16(28,0,true);
+    local.set(name,30); local.set(data,30+name.length);
+    locals.push({bytes:local, nameBytes:name, crc, sz, offset});
+    offset += local.length;
+  }
+
+  const cdStart = offset;
+  for(const {nameBytes, crc, sz, offset:lo} of locals){
+    const cd = new Uint8Array(46+nameBytes.length);
+    const cv = new DataView(cd.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true);
+    cv.setUint16(6,20,true);         cv.setUint16(8,0,true);
+    cv.setUint16(10,0,true);         cv.setUint16(12,0,true);
+    cv.setUint16(14,0,true);         cv.setUint32(16,crc,true);
+    cv.setUint32(20,sz,true);        cv.setUint32(24,sz,true);
+    cv.setUint16(28,nameBytes.length,true); cv.setUint16(30,0,true);
+    cv.setUint16(32,0,true);         cv.setUint16(34,0,true);
+    cv.setUint16(36,0,true);         cv.setUint32(38,0,true);
+    cv.setUint32(42,lo,true);        cd.set(nameBytes,46);
+    centrals.push(cd); offset += cd.length;
+  }
+
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(4,0,true);
+  ev.setUint16(6,0,true);          ev.setUint16(8,files.length,true);
+  ev.setUint16(10,files.length,true); ev.setUint32(12,offset-cdStart,true);
+  ev.setUint32(16,cdStart,true);   ev.setUint16(20,0,true);
+
+  const out = new Uint8Array(offset+22);
+  let pos=0;
+  for(const {bytes} of locals){ out.set(bytes,pos); pos+=bytes.length; }
+  for(const cd of centrals){ out.set(cd,pos); pos+=cd.length; }
+  out.set(eocd,pos);
+  return out;
+}
+
+async function exportarKit(){
+  const prompt = buildFullPrompt();
+  const hasImages = Object.keys(uploadedFiles).length > 0;
+  if(!prompt.trim() && !hasImages){ mostrarToast('⚠️ Gere um prompt primeiro!','warn'); return; }
+
+  const advSlug = (v('adv')||'arte').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  const files = [];
+
+  if(prompt.trim())
+    files.push({ name:`prompt-${advSlug}.txt`, data: new TextEncoder().encode(prompt) });
+
+  const labels = { fotoAtleta:'foto-atleta', logo1:'escudo-prospere', logo2:'escudo-adversario' };
+  await Promise.all(Object.entries(uploadedFiles).map(([key, file]) => new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const ext = (file.name.split('.').pop()||'png').toLowerCase();
+      files.push({ name:`${labels[key]||key}-${advSlug}.${ext}`, data: new Uint8Array(e.target.result) });
+      resolve();
+    };
+    reader.readAsArrayBuffer(file);
+  })));
+
+  const zip = buildZip(files);
+  const url = URL.createObjectURL(new Blob([zip],{type:'application/zip'}));
+  const a = document.createElement('a');
+  a.href=url; a.download=`kit-${advSlug}.zip`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  mostrarToast(`📦 Kit exportado! ${files.length} arquivo(s)`,'success');
+}
+
+// ═══════════════════════════════════
 // DASHBOARD DE ESTATÍSTICAS
 // ═══════════════════════════════════
 function abrirDashboard(){
@@ -1712,6 +1882,7 @@ function mostrarToast(msg, type=''){
 renderHistory();
 atualizarAdvList();
 renderFrasesCustom();
+renderProfileSelector();
 restoreDraft();
 carregarPromptDaURL();
 </script>
