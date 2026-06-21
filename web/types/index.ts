@@ -74,6 +74,8 @@ export interface PromptHistorico {
   nome: string
   clube: string
   adv: string
+  ferramenta?: string
+  idioma?: string
 }
 
 export interface AtletaProfile {

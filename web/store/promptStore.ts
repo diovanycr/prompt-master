@@ -99,6 +99,9 @@ interface PromptState {
   // adversários
   adversarios: string[]
   addAdversario: (a: string) => void
+
+  // load partida into form
+  loadPartidaToForm: (id: string) => void
 }
 
 export const usePromptStore = create<PromptState>()(
@@ -215,6 +218,8 @@ export const usePromptStore = create<PromptState>()(
           nome: s.form.nome,
           clube: s.form.clube,
           adv: s.form.adv,
+          ferramenta: s.ferramenta,
+          idioma: s.idioma,
         }
 
         set({
@@ -290,6 +295,24 @@ export const usePromptStore = create<PromptState>()(
       addAdversario: (a) => set(s => ({
         adversarios: [...new Set([a, ...s.adversarios])].slice(0, 30)
       })),
+
+      loadPartidaToForm: (id) => {
+        const p = get().partidas.find(x => x.id === id)
+        if (!p) return
+        set(s => ({
+          modo: p.modo,
+          form: {
+            ...s.form,
+            adv: p.adv,
+            data: p.data,
+            hora: p.hora || '',
+            local: p.local || '',
+            campeonato: p.campeonato || '',
+            golsNos: p.golsNos ?? 0,
+            golsAdv: p.golsAdv ?? 0,
+          },
+        }))
+      },
     }),
     {
       name: 'pm-store',
