@@ -66,6 +66,8 @@ export interface Partida {
   modo: ModoJogo
 }
 
+export type TagKey = 'bom' | 'ruim' | 'usado'
+
 export interface PromptHistorico {
   ts: number
   text: string
@@ -76,6 +78,7 @@ export interface PromptHistorico {
   adv: string
   ferramenta?: string
   idioma?: string
+  secoes?: SecaoContent
 }
 
 export interface AtletaProfile {

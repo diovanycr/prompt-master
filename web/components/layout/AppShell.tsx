@@ -7,6 +7,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { usePromptStore } from '@/store/promptStore'
 
 export default function AppShell() {
+  const { fullscreen } = usePromptStore()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   useKeyboardShortcuts()
 
@@ -42,26 +43,47 @@ export default function AppShell() {
     }
   }, [])
 
+  // Quando fullscreen ativa, fecha sidebar no mobile também
+  useEffect(() => {
+    if (fullscreen) setSidebarOpen(false)
+  }, [fullscreen])
+
+  const sidebarVisible = !fullscreen && sidebarOpen
+
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden">
+
       {/* Sidebar toggle (mobile) */}
-      <button
-        onClick={() => setSidebarOpen(o => !o)}
-        className="lg:hidden fixed bottom-4 left-4 z-50 w-12 h-12 text-black rounded-full shadow-xl text-lg font-bold flex items-center justify-center"
-        style={{ background: 'var(--gold)' }}>
-        {sidebarOpen ? '←' : '☰'}
-      </button>
+      {!fullscreen && (
+        <button
+          onClick={() => setSidebarOpen(o => !o)}
+          className="lg:hidden fixed bottom-4 left-4 z-50 w-12 h-12 text-black rounded-full shadow-xl text-lg font-bold flex items-center justify-center"
+          style={{ background: 'var(--gold)' }}>
+          {sidebarOpen ? '←' : '☰'}
+        </button>
+      )}
 
       {/* Sidebar */}
       <aside
-        className={`flex-none w-80 xl:w-96 overflow-y-auto border-r transition-all duration-200 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } lg:relative fixed inset-y-0 left-0 z-40 top-14 lg:top-0`}
+        className={`
+          flex-none border-r overflow-y-auto transition-all duration-300
+          lg:relative fixed inset-y-0 left-0 z-40 top-14 lg:top-0
+          ${fullscreen ? 'w-0 overflow-hidden border-none' : 'w-80 xl:w-96'}
+          ${!fullscreen && !sidebarOpen ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}
+        `}
         style={{ background: 'var(--bg)', borderColor: 'var(--border)' }}>
         <div className="p-4">
           <FormSection />
         </div>
       </aside>
+
+      {/* Overlay (mobile, quando sidebar aberta) */}
+      {sidebarOpen && !fullscreen && (
+        <div
+          className="lg:hidden fixed inset-0 z-30 bg-black/40 top-14"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main */}
       <main className="flex-1 min-w-0 flex flex-col overflow-hidden">

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type {
   Idioma, Intensidade, TipoArte, Ferramenta, ModoJogo,
-  FormData, SecaoContent, PromptHistorico, Partida, AtletaProfile, PromptTemplate,
+  FormData, SecaoContent, PromptHistorico, Partida, AtletaProfile, PromptTemplate, TagKey,
 } from '@/types'
 import { gerarSecoes, buildFullPrompt, PALETAS, ACOES, ANGULOS } from '@/lib/prompt-generator'
 
@@ -71,6 +71,12 @@ interface PromptState {
   toggleFav: (ts: number) => void
   tags: Record<number, string[]>
   setTags: (ts: number, t: string[]) => void
+  toggleTag: (ts: number, key: TagKey) => void
+  loadHistoricoEntry: (ts: number) => void
+
+  // ui
+  fullscreen: boolean
+  setFullscreen: (v: boolean) => void
 
   // partidas
   partidas: Partida[]
@@ -102,6 +108,12 @@ interface PromptState {
 
   // load partida into form
   loadPartidaToForm: (id: string) => void
+
+  // extra actions
+  resetForm: () => void
+  sortearSecao: (key: string) => void
+  duplicarHistorico: (ts: number) => void
+  updatePartida: (id: string, p: Partial<Partida>) => void
 }
 
 export const usePromptStore = create<PromptState>()(
@@ -220,6 +232,7 @@ export const usePromptStore = create<PromptState>()(
           adv: s.form.adv,
           ferramenta: s.ferramenta,
           idioma: s.idioma,
+          secoes: result.secoes,
         }
 
         set({
@@ -262,6 +275,31 @@ export const usePromptStore = create<PromptState>()(
       })),
       tags: {},
       setTags: (ts, t) => set(s => ({ tags: { ...s.tags, [ts]: t } })),
+      toggleTag: (ts, key) => set(s => {
+        const current = s.tags[ts] || []
+        let next: string[]
+        if (key === 'bom' || key === 'ruim') {
+          const opposite = key === 'bom' ? 'ruim' : 'bom'
+          next = current.filter(t => t !== opposite)
+        } else {
+          next = [...current]
+        }
+        if (next.includes(key)) next = next.filter(t => t !== key)
+        else next = [...next, key]
+        const tags = { ...s.tags }
+        if (next.length === 0) delete tags[ts]
+        else tags[ts] = next
+        return { tags }
+      }),
+      loadHistoricoEntry: (ts) => {
+        const h = get().historico.find(x => x.ts === ts)
+        if (!h) return
+        const secoes: SecaoContent = h.secoes ?? { conceito: h.text }
+        set({ secaoContent: secoes, fullPrompt: h.text })
+      },
+
+      fullscreen: false,
+      setFullscreen: (v) => set({ fullscreen: v }),
 
       partidas: [],
       addPartida: (p) => set(s => ({ partidas: [p, ...s.partidas] })),
@@ -313,6 +351,47 @@ export const usePromptStore = create<PromptState>()(
           },
         }))
       },
+
+      resetForm: () => set(s => ({
+        form: {
+          ...s.form,
+          adv: '', data: '', hora: '', local: '',
+          golsNos: 0, golsAdv: 0,
+        },
+        secaoContent: {},
+        fullPrompt: '',
+        generationStack: [],
+      })),
+
+      sortearSecao: (key) => {
+        const s = get()
+        if (!Object.keys(s.secaoContent).length) return
+        const frase = s.fraseCustom || (s.fraseSelecionada.startsWith('🎲')
+          ? (s.idioma === 'en' ? 'AI creates a unique phrase' : 'IA cria frase inédita')
+          : s.fraseSelecionada)
+        const result = gerarSecoes({
+          form: s.form, intensidade: s.intensidade, modo: s.modo, tipo: s.tipo,
+          ferramenta: s.ferramenta, idioma: s.idioma, frase,
+          paleta: s.paleta, acao: s.acao, angulo: s.angulo,
+          aleatorio: true, hasFoto: s.hasFoto, hasLogo1: s.hasLogo1, hasLogo2: s.hasLogo2,
+          genCount: s.genCount, lastSorteio: s.lastSorteio, categoriasTravadas: s.categoriasTravadas,
+        })
+        const newVal = result.secoes[key as keyof SecaoContent]
+        if (!newVal) return
+        const secaoContent = { ...s.secaoContent, [key]: newVal }
+        set({ secaoContent, fullPrompt: buildFullPrompt(secaoContent) })
+      },
+
+      duplicarHistorico: (ts) => set(s => {
+        const h = s.historico.find(x => x.ts === ts)
+        if (!h) return {}
+        const copy = { ...h, ts: Date.now() }
+        return { historico: [copy, ...s.historico].slice(0, 200) }
+      }),
+
+      updatePartida: (id, patch) => set(s => ({
+        partidas: s.partidas.map(p => p.id === id ? { ...p, ...patch } : p)
+      })),
     }),
     {
       name: 'pm-store',

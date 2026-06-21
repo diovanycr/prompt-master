@@ -10,8 +10,30 @@ async function agendarNotificacao(p: Partida) {
   let perm = Notification.permission
   if (perm === 'default') perm = await Notification.requestPermission()
   if (perm !== 'granted') return alert('Permissão de notificações negada. Ative nas configurações do browser.')
+
+  if (p.hora) {
+    // Agenda notificação 2h antes do horário do jogo (apenas nesta sessão)
+    const [hh, mm] = p.hora.split(':').map(Number)
+    const gameTime = new Date(p.data + 'T00:00:00')
+    gameTime.setHours(hh || 0, mm || 0, 0, 0)
+    const notifTime = new Date(gameTime.getTime() - 2 * 60 * 60 * 1000)
+    const delay = notifTime.getTime() - Date.now()
+    if (delay > 0) {
+      const horas = Math.round(delay / 3600000)
+      setTimeout(() => {
+        new Notification('⚽ Jogo em 2 horas!', {
+          body: `${p.adv} — ${p.hora}${p.local ? ` em ${p.local}` : ''}. Crie as artes agora!`,
+          icon: '/icon-192.png',
+        })
+      }, delay)
+      alert(`🔔 Lembrete agendado para ~${horas}h antes do jogo (válido nesta aba).`)
+      return
+    }
+  }
+
+  // Fallback: notificação imediata como prévia
   const data = new Date(p.data + 'T00:00:00')
-  const diff = Math.round((data.getTime() - new Date().setHours(0,0,0,0)) / 86400000)
+  const diff = Math.round((data.getTime() - new Date().setHours(0, 0, 0, 0)) / 86400000)
   const when = diff === 0 ? 'hoje' : diff === 1 ? 'amanhã' : `em ${diff} dias`
   new Notification('⚽ Lembrete de Jogo!', {
     body: `Partida vs ${p.adv} é ${when}${p.hora ? ` às ${p.hora}` : ''}${p.local ? ` em ${p.local}` : ''}. Prepare as artes!`,
@@ -19,20 +41,32 @@ async function agendarNotificacao(p: Partida) {
   })
 }
 
+type FormState = { adv: string; data: string; hora: string; local: string; campeonato: string; modo: ModoJogo; golsNos: number; golsAdv: number }
+const emptyForm: FormState = { adv: '', data: '', hora: '', local: '', campeonato: '', modo: 'pregame', golsNos: 0, golsAdv: 0 }
+
 export default function PartidasModal({ onClose }: { onClose: () => void }) {
-  const { partidas, addPartida, removePartida, loadPartidaToForm } = usePromptStore()
+  const { partidas, addPartida, removePartida, loadPartidaToForm, updatePartida } = usePromptStore()
   const [tab, setTab] = useState<'lista' | 'nova'>('lista')
-  const [form, setForm] = useState({
-    adv: '', data: '', hora: '', local: '', campeonato: '',
-    modo: 'pregame' as ModoJogo, golsNos: 0, golsAdv: 0,
-  })
+  const [form, setForm] = useState<FormState>(emptyForm)
+  const [editId, setEditId] = useState<string | null>(null)
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     if (!form.adv.trim() || !form.data) return
-    addPartida({ id: crypto.randomUUID(), ts: Date.now(), ...form })
-    setForm({ adv: '', data: '', hora: '', local: '', campeonato: '', modo: 'pregame', golsNos: 0, golsAdv: 0 })
+    if (editId) {
+      updatePartida(editId, form)
+      setEditId(null)
+    } else {
+      addPartida({ id: crypto.randomUUID(), ts: Date.now(), ...form })
+    }
+    setForm(emptyForm)
     setTab('lista')
+  }
+
+  function startEdit(p: Partida) {
+    setForm({ adv: p.adv, data: p.data, hora: p.hora || '', local: p.local || '', campeonato: p.campeonato || '', modo: p.modo, golsNos: p.golsNos ?? 0, golsAdv: p.golsAdv ?? 0 })
+    setEditId(p.id)
+    setTab('nova')
   }
 
   const hoje = new Date()
@@ -62,14 +96,14 @@ export default function PartidasModal({ onClose }: { onClose: () => void }) {
     <Modal title="📅 Partidas" onClose={onClose}>
       <div className="flex gap-2 mb-4">
         {(['lista', 'nova'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} onClick={() => { setTab(t); if (t === 'lista') { setEditId(null); setForm(emptyForm) } }}
             className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
             style={{
               background: tab === t ? 'var(--gold)' : 'var(--surface2)',
               borderColor: tab === t ? 'var(--gold)' : 'var(--border)',
               color: tab === t ? '#000' : 'var(--text-muted)',
             }}>
-            {t === 'lista' ? `📋 Lista (${partidas.length})` : '➕ Nova partida'}
+            {t === 'lista' ? `📋 Lista (${partidas.length})` : editId ? '✏️ Editar partida' : '➕ Nova partida'}
           </button>
         ))}
       </div>
@@ -116,6 +150,12 @@ export default function PartidasModal({ onClose }: { onClose: () => void }) {
                             🔔
                           </button>
                         )}
+                        <button onClick={() => startEdit(p)}
+                          className="text-[10px] px-2 py-1 rounded-lg border transition-colors"
+                          style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                          title="Editar partida">
+                          ✏️
+                        </button>
                         <button onClick={() => { loadPartidaToForm(p.id); onClose() }}
                           className="text-[10px] px-2.5 py-1 rounded-lg border font-medium transition-colors"
                           style={{ borderColor: 'var(--gold)', color: 'var(--gold)' }}>
@@ -194,7 +234,7 @@ export default function PartidasModal({ onClose }: { onClose: () => void }) {
           <button type="submit"
             className="w-full py-2.5 text-black font-bold rounded-lg text-sm transition-colors mt-1"
             style={{ background: 'var(--gold)' }}>
-            ➕ Adicionar Partida
+            {editId ? '💾 Salvar alterações' : '➕ Adicionar Partida'}
           </button>
         </form>
       )}
