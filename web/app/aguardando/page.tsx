@@ -13,20 +13,23 @@ export default function AguardandoPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f] p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg)' }}>
       <div className="text-center max-w-md">
         <div className="text-6xl mb-4">⏳</div>
-        <h1 className="text-2xl font-bold text-[#f0b429] mb-2">Aguardando aprovação</h1>
-        <p className="text-[#888898] mb-6 leading-relaxed">
+        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--gold)' }}>Aguardando aprovação</h1>
+        <p className="mb-6 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
           Seu cadastro foi recebido com sucesso! Um administrador irá revisar e aprovar seu acesso em breve.
           Você receberá uma confirmação quando seu acesso for liberado.
         </p>
-        <div className="bg-[#14141e] border border-[#2a2a3e] rounded-xl p-4 mb-6 text-sm text-[#888898]">
+        <div className="rounded-xl p-4 mb-6 text-sm border" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
           💡 Já possui aprovação? Tente sair e entrar novamente.
         </div>
         <button
           onClick={sair}
-          className="px-6 py-2.5 bg-[#1e1e2e] border border-[#2a2a3e] hover:border-[#f0b429] text-[#e8e8f0] rounded-lg transition-colors text-sm"
+          className="px-6 py-2.5 rounded-lg transition-colors text-sm border"
+          style={{ background: 'var(--surface2)', borderColor: 'var(--border)', color: 'var(--text)' }}
+          onMouseOver={e => (e.currentTarget.style.borderColor = 'var(--gold)')}
+          onMouseOut={e => (e.currentTarget.style.borderColor = 'var(--border)')}
         >
           Sair e voltar ao login
         </button>

@@ -12,16 +12,18 @@ export default function AppShell() {
       {/* Sidebar toggle button (mobile) */}
       <button
         onClick={() => setSidebarOpen(o => !o)}
-        className="lg:hidden fixed bottom-4 left-4 z-50 w-12 h-12 bg-[#f0b429] text-black rounded-full shadow-xl text-lg font-bold flex items-center justify-center"
+        className="lg:hidden fixed bottom-4 left-4 z-50 w-12 h-12 text-black rounded-full shadow-xl text-lg font-bold flex items-center justify-center"
+        style={{ background: 'var(--gold)' }}
       >
         {sidebarOpen ? '←' : '☰'}
       </button>
 
       {/* Sidebar */}
       <aside
-        className={`flex-none w-80 xl:w-96 overflow-y-auto bg-[#0a0a0f] border-r border-[#2a2a3e] transition-all duration-200 ${
+        className={`flex-none w-80 xl:w-96 overflow-y-auto border-r transition-all duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         } lg:relative fixed inset-y-0 left-0 z-40 top-14 lg:top-0`}
+        style={{ background: 'var(--bg)', borderColor: 'var(--border)' }}
       >
         <div className="p-4">
           <FormSection />

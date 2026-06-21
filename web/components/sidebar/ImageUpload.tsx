@@ -74,23 +74,24 @@ export default function ImageUpload({
 
   return (
     <div className="relative">
-      <label className="block text-[10px] font-medium text-[#888898] mb-1">{label}</label>
+      <label className="block text-[10px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{label}</label>
       <div
         onClick={() => !preview && inputRef.current?.click()}
-        className={`relative rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all overflow-hidden ${
-          preview
-            ? 'border-[#f0b429]/40 bg-[#1e1e2e]'
-            : obrigatorio
-              ? 'border-[#f0b429]/30 hover:border-[#f0b429]/60 bg-[#1e1e2e] h-24'
-              : 'border-[#2a2a3e] hover:border-[#3a3a5e] bg-[#1e1e2e] h-20'
-        }`}
+        className="relative rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all overflow-hidden"
+        style={{
+          background: 'var(--surface2)',
+          borderColor: preview ? 'color-mix(in srgb, var(--gold) 40%, transparent)' : obrigatorio ? 'color-mix(in srgb, var(--gold) 30%, transparent)' : 'var(--border)',
+          minHeight: preview ? undefined : obrigatorio ? '6rem' : '5rem',
+        }}
       >
         {preview ? (
           <img src={preview} alt={label} className="w-full h-24 object-contain p-1" />
         ) : (
-          <div className="text-center">
+          <div className="text-center py-2">
             <div className="text-2xl mb-1">{inputKey === 'atleta' ? '👤' : '🛡️'}</div>
-            <p className="text-[10px] text-[#888898]">{obrigatorio ? 'Clique para enviar (obrigatório)' : 'Clique para enviar (opcional)'}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+              {obrigatorio ? 'Clique para enviar (obrigatório)' : 'Clique para enviar (opcional)'}
+            </p>
           </div>
         )}
       </div>
@@ -99,13 +100,15 @@ export default function ImageUpload({
         <div className="flex gap-2 mt-1.5">
           <button
             onClick={() => inputRef.current?.click()}
-            className="flex-1 py-1 text-[10px] bg-[#1e1e2e] border border-[#2a2a3e] rounded-lg text-[#888898] hover:text-[#e8e8f0] transition-colors"
+            className="flex-1 py-1 text-[10px] rounded-lg transition-colors border"
+            style={{ background: 'var(--surface2)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
           >
             🔄 Trocar
           </button>
           <button
             onClick={remover}
-            className="flex-1 py-1 text-[10px] bg-[#1e1e2e] border border-[#2a2a3e] rounded-lg text-red-400 hover:bg-red-950/50 transition-colors"
+            className="flex-1 py-1 text-[10px] rounded-lg text-red-400 hover:bg-red-950/50 transition-colors border"
+            style={{ background: 'var(--surface2)', borderColor: 'var(--border)' }}
           >
             🗑️ Remover
           </button>

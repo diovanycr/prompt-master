@@ -18,6 +18,18 @@ const Ctx = createContext<ToastCtx>({ toast: () => {} })
 
 let id = 0
 
+function toastStyle(tipo: ToastType): React.CSSProperties {
+  if (tipo === '') return { background: 'color-mix(in srgb, var(--surface2) 90%, transparent)', borderColor: 'var(--border)', color: 'var(--text)' }
+  return {}
+}
+
+function toastClass(tipo: ToastType): string {
+  if (tipo === 'success') return 'bg-green-950/90 border-green-700 text-green-200'
+  if (tipo === 'warn') return 'bg-yellow-950/90 border-yellow-700 text-yellow-200'
+  if (tipo === 'error') return 'bg-red-950/90 border-red-700 text-red-200'
+  return 'border backdrop-blur-sm'
+}
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
@@ -34,12 +46,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map(t => (
           <div
             key={t.id}
-            className={`pointer-events-auto toast-enter px-4 py-3 rounded-xl text-sm font-medium shadow-xl border backdrop-blur-sm max-w-xs ${
-              t.tipo === 'success' ? 'bg-green-950/90 border-green-700 text-green-200' :
-              t.tipo === 'warn' ? 'bg-yellow-950/90 border-yellow-700 text-yellow-200' :
-              t.tipo === 'error' ? 'bg-red-950/90 border-red-700 text-red-200' :
-              'bg-[#1e1e2e]/90 border-[#2a2a3e] text-[#e8e8f0]'
-            }`}
+            className={`pointer-events-auto toast-enter px-4 py-3 rounded-xl text-sm font-medium shadow-xl border backdrop-blur-sm max-w-xs ${toastClass(t.tipo)}`}
+            style={toastStyle(t.tipo)}
           >
             {t.msg}
           </div>

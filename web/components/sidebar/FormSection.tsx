@@ -80,7 +80,7 @@ export default function FormSection() {
               key={m}
               onClick={() => setModo(m)}
               className={`py-2 rounded-lg text-sm font-medium border transition-all ${
-                modo === m ? 'bg-[#f0b429]/15 border-[#f0b429] text-[#f0b429]' : 'bg-[#1e1e2e] border-[#2a2a3e] text-[#888898] hover:text-[#e8e8f0]'
+                modo === m ? 'border-[var(--gold)] text-[var(--gold)]' : 'border-[var(--border)] hover:text-[var(--text)]'
               }`}
             >
               {m === 'pregame' ? '⚡ Pré-jogo' : '🏁 Pós-jogo'}
@@ -95,7 +95,7 @@ export default function FormSection() {
               key={i}
               onClick={() => setIntensidade(i)}
               className={`py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                intensidade === i ? 'bg-[#f0b429]/15 border-[#f0b429] text-[#f0b429]' : 'bg-[#1e1e2e] border-[#2a2a3e] text-[#888898] hover:text-[#e8e8f0]'
+                intensidade === i ? 'border-[var(--gold)] text-[var(--gold)]' : 'border-[var(--border)] hover:text-[var(--text)]'
               }`}
             >
               {INTENSIDADE_LABELS[i]}
@@ -103,7 +103,7 @@ export default function FormSection() {
           ))}
         </div>
         {intensidade && (
-          <p className="text-[10px] text-[#888898] mt-2 leading-relaxed">
+          <p className="text-[10px] mt-2 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
             {intensidadeMap[intensidade]?.desc}
           </p>
         )}
@@ -137,7 +137,7 @@ export default function FormSection() {
               key={t}
               onClick={() => setTipo(t)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition-all ${
-                tipo === t ? 'bg-[#f0b429]/15 border-[#f0b429] text-[#f0b429]' : 'bg-[#1e1e2e] border-transparent text-[#888898] hover:border-[#2a2a3e] hover:text-[#e8e8f0]'
+                tipo === t ? 'border-[var(--gold)] text-[var(--gold)]' : 'border-transparent hover:border-[var(--border)] hover:text-[var(--text)]'
               }`}
             >
               {t}
@@ -154,7 +154,7 @@ export default function FormSection() {
               key={f}
               onClick={() => setFerramenta(f)}
               className={`py-2 rounded-lg text-sm border transition-all ${
-                ferramenta === f ? 'bg-[#f0b429]/15 border-[#f0b429] text-[#f0b429]' : 'bg-[#1e1e2e] border-[#2a2a3e] text-[#888898] hover:text-[#e8e8f0]'
+                ferramenta === f ? 'border-[var(--gold)] text-[var(--gold)]' : 'border-[var(--border)] hover:text-[var(--text)]'
               }`}
             >
               {f}
@@ -169,7 +169,7 @@ export default function FormSection() {
           {PALETAS.map(p => (
             <button key={p} onClick={() => setPaleta(p)}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs border transition-all ${
-                paleta === p ? 'bg-[#f0b429]/15 border-[#f0b429] text-[#f0b429]' : 'bg-[#1e1e2e] border-transparent text-[#888898] hover:border-[#2a2a3e]'
+                paleta === p ? 'border-[var(--gold)] text-[var(--gold)]' : 'border-transparent hover:border-[var(--border)]'
               }`}
             >{p}</button>
           ))}
@@ -182,7 +182,7 @@ export default function FormSection() {
           {ACOES.map(a => (
             <button key={a} onClick={() => setAcao(a)}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs border transition-all ${
-                acao === a ? 'bg-[#f0b429]/15 border-[#f0b429] text-[#f0b429]' : 'bg-[#1e1e2e] border-transparent text-[#888898] hover:border-[#2a2a3e]'
+                acao === a ? 'border-[var(--gold)] text-[var(--gold)]' : 'border-transparent hover:border-[var(--border)]'
               }`}
             >{a}</button>
           ))}
@@ -195,7 +195,7 @@ export default function FormSection() {
           {ANGULOS.map(a => (
             <button key={a} onClick={() => setAngulo(a)}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs border transition-all ${
-                angulo === a ? 'bg-[#f0b429]/15 border-[#f0b429] text-[#f0b429]' : 'bg-[#1e1e2e] border-transparent text-[#888898] hover:border-[#2a2a3e]'
+                angulo === a ? 'border-[var(--gold)] text-[var(--gold)]' : 'border-transparent hover:border-[var(--border)]'
               }`}
             >{a}</button>
           ))}
@@ -208,7 +208,7 @@ export default function FormSection() {
           {FRASES_PRESET.map(f => (
             <button key={f} onClick={() => { setFraseSelecionada(f); setFraseCustom('') }}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-xs border transition-all ${
-                fraseSelecionada === f && !fraseCustom ? 'bg-[#f0b429]/15 border-[#f0b429] text-[#f0b429]' : 'bg-[#1e1e2e] border-transparent text-[#888898] hover:border-[#2a2a3e]'
+                fraseSelecionada === f && !fraseCustom ? 'border-[var(--gold)] text-[var(--gold)]' : 'border-transparent hover:border-[var(--border)]'
               }`}
             >{f}</button>
           ))}
@@ -218,7 +218,8 @@ export default function FormSection() {
           onChange={e => setFraseCustom(e.target.value)}
           placeholder="Ou escreva uma frase customizada..."
           rows={2}
-          className="w-full bg-[#1e1e2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-xs text-[#e8e8f0] placeholder-[#555568] resize-none"
+          className="w-full rounded-lg px-3 py-2 text-xs resize-none border transition-colors"
+          style={{ background: 'var(--surface2)', borderColor: 'var(--border)', color: 'var(--text)' }}
         />
       </Bloco>
     </div>
@@ -227,8 +228,8 @@ export default function FormSection() {
 
 function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <div className="bg-[#14141e] border border-[#2a2a3e] rounded-xl p-4">
-      <h3 className="text-xs font-semibold text-[#888898] uppercase tracking-wider mb-3">{titulo}</h3>
+    <div className="rounded-xl p-4 border transition-colors" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+      <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{titulo}</h3>
       {children}
     </div>
   )
@@ -241,13 +242,14 @@ function Input({
 }) {
   return (
     <div>
-      <label className="block text-[10px] font-medium text-[#888898] mb-1">{label}</label>
+      <label className="block text-[10px] font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{label}</label>
       <input
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-[#1e1e2e] border border-[#2a2a3e] rounded-lg px-3 py-2 text-sm text-[#e8e8f0] placeholder-[#555568]"
+        className="w-full rounded-lg px-3 py-2 text-sm border transition-colors"
+        style={{ background: 'var(--surface2)', borderColor: 'var(--border)', color: 'var(--text)' }}
       />
     </div>
   )
