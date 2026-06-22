@@ -7,6 +7,7 @@ import { compressImage } from '@/lib/compress-image'
 import ExportModal from '@/components/modals/ExportModal'
 import LoteModal from '@/components/modals/LoteModal'
 import StatsModal from '@/components/modals/StatsModal'
+import ApresentacaoModal from '@/components/modals/ApresentacaoModal'
 import type { TagKey } from '@/types'
 import { useEffect } from 'react'
 import { useToast } from '@/components/ui/Toast'
@@ -21,6 +22,7 @@ export default function PromptOutput() {
   const [showAB, setShowAB] = useState(false)
   const [showLote, setShowLote] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [showApresentacao, setShowApresentacao] = useState(false)
   const [busca, setBusca] = useState('')
   const [filtroFav, setFiltroFav] = useState(false)
   const [filtroTipo, setFiltroTipo] = useState('')
@@ -129,6 +131,7 @@ export default function PromptOutput() {
       {showAB && <LoteModal initialTab="ab" onClose={() => setShowAB(false)} />}
       {showLote && <LoteModal initialTab="lote" onClose={() => setShowLote(false)} />}
       {showStats && <StatsModal onClose={() => setShowStats(false)} />}
+      {showApresentacao && <ApresentacaoModal entries={historicoFiltrado} onClose={() => setShowApresentacao(false)} />}
 
       {/* Warn banner: imagens pendentes */}
       {(!hasFoto || !hasLogo1) && (
@@ -324,6 +327,11 @@ export default function PromptOutput() {
                 <Pill active={agrupar} onClick={() => setAgrupar(v => !v)}>
                   👤 Agrupar
                 </Pill>
+                {historicoFiltrado.length > 0 && (
+                  <Pill active={false} onClick={() => setShowApresentacao(true)}>
+                    🎬 Apresentar
+                  </Pill>
+                )}
               </div>
               {(busca || filtroFav || filtroTipo) && (
                 <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
